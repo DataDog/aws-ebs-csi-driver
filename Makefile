@@ -23,7 +23,7 @@ VERSION?=v1.41.0
 PKG=github.com/kubernetes-sigs/aws-ebs-csi-driver
 GIT_COMMIT?=$(shell git rev-parse HEAD)
 BUILD_DATE?=$(shell date -u -Iseconds)
-LDFLAGS?="-X ${PKG}/pkg/driver.driverVersion=${VERSION} -X ${PKG}/pkg/cloud.driverVersion=${VERSION} -X ${PKG}/pkg/driver.gitCommit=${GIT_COMMIT} -X ${PKG}/pkg/driver.buildDate=${BUILD_DATE} -s -w"
+LDFLAGS?="-X ${PKG}/pkg/driver.driverVersion=${VERSION} -X ${PKG}/pkg/cloud.driverVersion=${VERSION} -X ${PKG}/pkg/driver.gitCommit=${GIT_COMMIT} -X ${PKG}/pkg/driver.buildDate=${BUILD_DATE}"
 
 OS?=$(shell go env GOHOSTOS)
 ARCH?=$(shell go env GOHOSTARCH)
@@ -245,7 +245,8 @@ bin:
 	@mkdir -p $@
 
 bin/$(BINARY): $(GO_SOURCES) | bin
-	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -mod=readonly -ldflags ${LDFLAGS} -o $@ ./cmd/
+	CGO_ENABLED=1 GOEXPERIMENT=boringcrypto GOOS=$(OS) GOARCH=$(ARCH) go build -mod=readonly -ldflags ${LDFLAGS} -o $@ -tags fips ./cmd/
+	go tool nm $@ | grep 'sig\.FIPSOnly'
 
 .PHONY: all-image-registry
 all-image-registry: $(addprefix sub-image-,$(ALL_OS_ARCH_OSVERSION))
