@@ -12,6 +12,8 @@ build-docker-image:
 
 run-campaign:
   variables:
+    GIT_STRATEGY: clone # clone entire repo instead of reusing workspace
+    GIT_DEPTH: 0
     CHART_NAME: k8s-platform-aws-ebs-csi-driver
     COMPONENT: driver
   extends: .run-campaign
