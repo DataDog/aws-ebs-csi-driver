@@ -15,4 +15,5 @@ run-campaign:
     CHART_NAME: k8s-platform-aws-ebs-csi-driver
     COMPONENT: driver
     SLACK_CHANNEL: compute-storage-ops
+    AUTO_MERGE: "true"
   extends: .run-campaign
