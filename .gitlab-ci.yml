@@ -11,9 +11,54 @@ build-docker-image:
   extends: .build-docker-image
 
 run-campaign:
+  stage: campaign
+  rules:
+    # Only run on tags that look like a version number
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+(?:-.+)?$/
+  tags: ["arch:amd64"]
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/images/compute-bumper:v1.0.0
   variables:
     CHART_NAME: k8s-platform-aws-ebs-csi-driver
     COMPONENT: driver
     SLACK_CHANNEL: compute-storage-ops
-    AUTO_MERGE: "true"
-  extends: .run-campaign
+    AUTO_MERGE: "false"
+    stage: campaign
+    BRANCH_NAME: "bump-${CI_PROJECT_NAME}"
+    CAMPAIGN_TEMPLATE: |
+      campaigner_settings:
+        name: "Bump ${CI_PROJECT_NAME} image"
+        owner: "Compute"
+        slack_channel: "$SLACK_CHANNEL"
+        description: "Campaign to bump ${CI_PROJECT_NAME} image"
+        manual_refresh: false
+        make_edits: true
+        draft: false
+        batch_pr: true
+        allow_automerge: ${AUTO_MERGE}
+      github:
+        repos:
+          - repo: k8s-platform-resources
+            branch: master
+        pull_request:
+          branch_name: "campaign/${BRANCH_NAME}"
+          title: Bump ${CI_PROJECT_NAME} image to the latest version
+          description: This pull request bumps the ${CI_PROJECT_NAME} image to its latest version.
+          default_commit_msg: "chore: bump ${CI_PROJECT_NAME} image to the latest version"
+      file_patterns:
+        root: .
+        regex: ["k8s/${CHART_NAME}/values.yaml", "k8s/${CHART_NAME}/Chart.yaml"]
+      changes:
+        - op: "custom/search_and_replace"
+          key: !perl/regexp '(${COMPONENT}: "[^:]+):.+"'
+          value: '$$1:${CI_COMMIT_TAG}"'
+  artifacts:
+    when: always
+    paths:
+      - campaign.yaml
+  script:
+    - git config --global --add safe.directory $CI_PROJECT_DIR
+    - |
+      cat <<EOF | envsubst > campaign.yaml
+      $CAMPAIGN_TEMPLATE
+      EOF
+    - campaigns start --env staging --config-file campaign.yaml
