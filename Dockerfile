@@ -20,6 +20,7 @@ FROM --platform=$BUILDPLATFORM golang:1.22.2 AS builder
 WORKDIR /go/src/github.com/kubernetes-sigs/aws-ebs-csi-driver
 COPY go.* .
 ARG GOPROXY
+ENV GOTOOLCHAIN auto
 RUN go mod download
 COPY . .
 ARG TARGETOS
