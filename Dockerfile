@@ -21,6 +21,7 @@ WORKDIR /go/src/github.com/kubernetes-sigs/aws-ebs-csi-driver
 RUN go env -w GOCACHE=/gocache GOMODCACHE=/gomodcache
 COPY go.* .
 ARG GOPROXY
+ENV GOTOOLCHAIN auto
 RUN --mount=type=cache,target=/gomodcache go mod download
 COPY . .
 ARG TARGETOS
