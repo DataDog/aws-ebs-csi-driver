@@ -31,4 +31,8 @@ RUN --mount=type=cache,target=/gomodcache --mount=type=cache,target=/gocache OS=
 
 FROM $BASE_IMAGE
 COPY --from=builder /go/src/github.com/kubernetes-sigs/aws-ebs-csi-driver/bin/aws-ebs-csi-driver /bin/aws-ebs-csi-driver
+# Install xfs tools for xfs filesystem support in EBS volumes
+USER root
+RUN clean-apt install xfsprogs
+USER dog
 ENTRYPOINT ["/bin/aws-ebs-csi-driver"]
