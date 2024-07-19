@@ -36,10 +36,6 @@ func InitOtelTracing() (*otlptrace.Exporter, error) {
 	// Resource will auto populate spans with common attributes
 	resource, err := resource.New(ctx,
 		resource.WithFromEnv(), // pull attributes from OTEL_RESOURCE_ATTRIBUTES and OTEL_SERVICE_NAME environment variables
-		resource.WithProcess(),
-		resource.WithOS(),
-		resource.WithContainer(),
-		resource.WithHost(),
 	)
 	if err != nil {
 		klog.ErrorS(err, "failed to create the OTLP resource, spans will lack some metadata")
