@@ -89,6 +89,17 @@ type Options struct {
 	WindowsHostProcess bool
 	// LegacyXFSProgs formats XFS volumes with `bigtime=0,inobtcount=0,reflink=0`, so that they can be mounted onto nodes with linux kernel ≤ v5.4. Volumes formatted with this option may experience issues after 2038, and will be unable to use some XFS features (for example, reflinks).
 	LegacyXFSProgs bool
+
+	CreationInitialDelay    time.Duration
+	CreationBackoffDuration time.Duration
+	CreationBackoffFactor   float64
+	CreationBackoffSteps    int
+	CreationBackoffCap      time.Duration
+
+	AttachmentBackoffDuration time.Duration
+	AttachmentBackoffFactor   float64
+	AttachmentBackoffSteps    int
+	AttachmentBackoffCap      time.Duration
 }
 
 func (o *Options) AddFlags(f *flag.FlagSet) {
@@ -111,6 +122,15 @@ func (o *Options) AddFlags(f *flag.FlagSet) {
 		f.StringVar(&o.UserAgentExtra, "user-agent-extra", "", "Extra string appended to user agent.")
 		f.BoolVar(&o.Batching, "batching", false, "To enable batching of API calls. This is especially helpful for improving performance in workloads that are sensitive to EC2 rate limits.")
 		f.DurationVar(&o.ModifyVolumeRequestHandlerTimeout, "modify-volume-request-handler-timeout", DefaultModifyVolumeRequestHandlerTimeout, "Timeout for the window in which volume modification calls must be received in order for them to coalesce into a single volume modification call to AWS. This must be lower than the csi-resizer and volumemodifier timeouts")
+		f.DurationVar(&o.CreationInitialDelay, "creation-initial-delay", DefaultCreationInitialDelay, "Initial delay of the volume creation request")
+		f.DurationVar(&o.CreationBackoffDuration, "creation-backoff-duration", DefaultCreationBackoffDuration, "Creation backoff duration")
+		f.Float64Var(&o.CreationBackoffFactor, "creation-backoff-factor", DefaultCreationBackoffFactor, "Creation backoff factor")
+		f.IntVar(&o.CreationBackoffSteps, "creation-backoff-steps", DefaultCreationBackoffSteps, "Creation backoff steps")
+		f.DurationVar(&o.CreationBackoffCap, "creation-backoff-cap", DefaultCreationBackoffCap, "Creation backoff cap")
+		f.DurationVar(&o.AttachmentBackoffDuration, "attachment-backoff-duration", DefaultAttachmentBackoffDuration, "Attachment backoff duration")
+		f.Float64Var(&o.AttachmentBackoffFactor, "attachment-backoff-factor", DefaultAttachmentBackoffFactor, "Attachment backoff factor")
+		f.IntVar(&o.AttachmentBackoffSteps, "attachment-backoff-steps", DefaultAttachmentBackoffSteps, "Attachment backoff steps")
+		f.DurationVar(&o.AttachmentBackoffCap, "attachment-backoff-cap", DefaultAttachmentBackoffCap, "Attachment backoff cap")
 	}
 	// Node options
 	if o.Mode == AllMode || o.Mode == NodeMode {

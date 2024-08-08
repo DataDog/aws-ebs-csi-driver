@@ -273,28 +273,6 @@ type volumeWaitParameters struct {
 
 var (
 	vwp = volumeWaitParameters{
-		// Based on our testing in us-west-2 and ap-south-1, the median/p99 time until volume creation is ~1.5/~4 seconds.
-		// We have found that the following parameters are optimal for minimizing provisioning time and DescribeVolumes calls
-		// we queue DescribeVolume calls after [1.25, 0.5, 0.75, 1.125, 1.7, 2.5, 3] seconds.
-		// In total, we wait for ~60 seconds.
-		creationInitialDelay: 1250 * time.Millisecond,
-		creationBackoff: wait.Backoff{
-			Duration: 500 * time.Millisecond,
-			Factor:   1.5,
-			Steps:    25,
-			Cap:      3 * time.Second,
-		},
-
-		// Most attach/detach operations on AWS finish within 1-4 seconds.
-		// By using 1 second starting interval with a backoff of 1.8,
-		// we get [1, 1.8, 3.24, 5.832000000000001, 10.4976].
-		// In total, we wait for 2601 seconds.
-		attachmentBackoff: wait.Backoff{
-			Duration: 1 * time.Second,
-			Factor:   1.8,
-			Steps:    13,
-		},
-
 		modificationBackoff: wait.Backoff{
 			Duration: 1 * time.Second,
 			Factor:   1.7,
@@ -334,12 +312,12 @@ var _ Cloud = &cloud{}
 
 // NewCloud returns a new instance of AWS cloud
 // It panics if session is invalid
-func NewCloud(region string, awsSdkDebugLog bool, userAgentExtra string, batching bool) (Cloud, error) {
-	c := newEC2Cloud(region, awsSdkDebugLog, userAgentExtra, batching)
+func NewCloud(region string, awsSdkDebugLog bool, userAgentExtra string, batching bool, creationInitialDelay time.Duration, creationBackoff wait.Backoff, attachmentBackoff wait.Backoff) (Cloud, error) {
+	c := newEC2Cloud(region, awsSdkDebugLog, userAgentExtra, batching, creationInitialDelay, creationBackoff, attachmentBackoff)
 	return c, nil
 }
 
-func newEC2Cloud(region string, awsSdkDebugLog bool, userAgentExtra string, batchingEnabled bool) Cloud {
+func newEC2Cloud(region string, awsSdkDebugLog bool, userAgentExtra string, batchingEnabled bool, creationInitialDelay time.Duration, creationBackoff wait.Backoff, attachmentBackoff wait.Backoff) Cloud {
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
 	if err != nil {
 		panic(err)
@@ -374,6 +352,10 @@ func newEC2Cloud(region string, awsSdkDebugLog bool, userAgentExtra string, batc
 		klog.V(4).InfoS("newEC2Cloud: batching enabled")
 		bm = newBatcherManager(svc)
 	}
+
+	vwp.creationInitialDelay = creationInitialDelay
+	vwp.creationBackoff = creationBackoff
+	vwp.attachmentBackoff = attachmentBackoff
 
 	return &cloud{
 		region:               region,

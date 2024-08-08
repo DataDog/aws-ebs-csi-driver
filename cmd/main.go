@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"os"
 	"strings"
 	"time"
@@ -168,7 +169,22 @@ func main() {
 		region = md.GetRegion()
 	}
 
-	cloud, err := cloud.NewCloud(region, options.AwsSdkDebugLog, options.UserAgentExtra, options.Batching)
+	creationBackoff := wait.Backoff{
+		Duration: options.CreationBackoffDuration,
+		Factor:   options.CreationBackoffFactor,
+		Steps:    options.CreationBackoffSteps,
+		Cap:      options.CreationBackoffCap,
+	}
+
+	attachmentBackoff := wait.Backoff{
+		Duration: options.AttachmentBackoffDuration,
+		Factor:   options.AttachmentBackoffFactor,
+		Steps:    options.AttachmentBackoffSteps,
+		Cap:      options.AttachmentBackoffCap,
+	}
+
+	cloud, err := cloud.NewCloud(region, options.AwsSdkDebugLog, options.UserAgentExtra, options.Batching, options.CreationInitialDelay, creationBackoff, attachmentBackoff)
+
 	if err != nil {
 		klog.ErrorS(err, "failed to create cloud service")
 		klog.FlushAndExit(klog.ExitFlushTimeout, 1)
