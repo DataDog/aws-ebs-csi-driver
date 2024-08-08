@@ -154,6 +154,15 @@ const (
 const (
 	DefaultCSIEndpoint                       = "unix://tmp/csi.sock"
 	DefaultModifyVolumeRequestHandlerTimeout = 2 * time.Second
+	DefaultCreationInitialDelay              = 1250 * time.Millisecond
+	DefaultCreationBackoffDuration           = 500 * time.Millisecond
+	DefaultCreationBackoffFactor             = 1.5
+	DefaultCreationBackoffSteps              = 25
+	DefaultCreationBackoffCap                = 3 * time.Second
+	DefaultAttachmentBackoffDuration         = 1 * time.Second
+	DefaultAttachmentBackoffFactor           = 1.8
+	DefaultAttachmentBackoffSteps            = 13
+	DefaultAttachmentBackoffCap              = time.Duration(0)
 )
 
 // constants for fstypes
