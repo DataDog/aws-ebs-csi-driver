@@ -6,6 +6,9 @@ test:
   image: registry.ddbuild.io/images/mirror/golang:1.22.2
   variables:
     GOTOOLCHAIN: "auto"
+    KUBERNETES_CPU_REQUEST: "4"
+    KUBERNETES_MEMORY_REQUEST: "8Gi"
+    KUBERNETES_MEMORY_LIMIT: "8Gi"
   script:
     - make test
 
