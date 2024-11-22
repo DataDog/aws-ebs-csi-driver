@@ -79,7 +79,7 @@ test/coverage:
 	rm cover.out filtered_cover.out
 
 # TODO: Re-enable sanity tests
-# sanity tests have been disabled with the removal of NewFakeDriver, which was previously created to instantiate a fake driver utilized for testing. 
+# sanity tests have been disabled with the removal of NewFakeDriver, which was previously created to instantiate a fake driver utilized for testing.
 # to re-enable tests, implement sanity tests creating a new driver instance by injecting mocked dependencies.
 #.PHONY: test-sanity
 #test-sanity:
@@ -210,7 +210,7 @@ bin:
 	@mkdir -p $@
 
 bin/$(BINARY): $(GO_SOURCES) | bin
-	CGO_ENABLED=0 GOOS=$(OS) GOARCH=$(ARCH) go build -mod=readonly -ldflags ${LDFLAGS} -o $@ -buildvcs=false ./cmd/
+	CGO_ENABLED=1 GOEXPERIMENT=boringcrypto GOOS=$(OS) GOARCH=$(ARCH) go build -mod=readonly -ldflags ${LDFLAGS} -o $@ -buildvcs=false ./cmd/
 
 .PHONY: all-image-registry
 all-image-registry: $(addprefix sub-image-,$(ALL_OS_ARCH_OSVERSION))
