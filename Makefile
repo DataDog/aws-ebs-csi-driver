@@ -79,7 +79,7 @@ test/coverage:
 	rm cover.out filtered_cover.out
 
 # TODO: Re-enable sanity tests
-# sanity tests have been disabled with the removal of NewFakeDriver, which was previously created to instantiate a fake driver utilized for testing.
+# sanity tests have been disabled with the removal of NewFakeDriver, which was previously created to instantiate a fake driver utilized for testing. 
 # to re-enable tests, implement sanity tests creating a new driver instance by injecting mocked dependencies.
 #.PHONY: test-sanity
 #test-sanity:
