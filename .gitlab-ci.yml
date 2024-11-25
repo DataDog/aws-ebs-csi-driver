@@ -15,11 +15,9 @@ test:
 verify-fips:
   stage: build
   tags: [ "runner:main" ]
-  image: $CURRENT_CI_IMAGE
+  image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/k8s-volume-manager:4
   script:
-    - *export-github-token
-    - git config --global url."https://${GITHUB_TOKEN}@github.com/DataDog".insteadOf https://github.com/DataDog
-    - make verify-fips
+    - go tool nm bin/aws-ebs-csi-driver | grep -E 'sig.FIPSOnly|sig.BoringCrypto|sig.StandardCrypto'
 
 build-docker-image:
   extends: .build-docker-image
