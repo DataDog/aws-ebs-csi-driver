@@ -12,5 +12,14 @@ test:
   script:
     - make test
 
+verify-fips:
+  stage: build
+  tags: [ "runner:main" ]
+  image: $CURRENT_CI_IMAGE
+  script:
+    - *export-github-token
+    - git config --global url."https://${GITHUB_TOKEN}@github.com/DataDog".insteadOf https://github.com/DataDog
+    - make verify-fips
+
 build-docker-image:
   extends: .build-docker-image
