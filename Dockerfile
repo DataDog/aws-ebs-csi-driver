@@ -28,7 +28,12 @@ COPY . .
 ARG TARGETOS
 ARG TARGETARCH
 ARG VERSION
-RUN --mount=type=cache,target=/gomodcache --mount=type=cache,target=/gocache OS=$TARGETOS ARCH=$TARGETARCH make
+ARG BUILD_ARGS=""
+RUN --mount=type=cache,target=/gomodcache \
+    --mount=type=cache,target=/gocache \
+    OS=$TARGETOS \
+    ARCH=$TARGETARCH \
+    eval $BUILD_ARGS make
 
 FROM $BASE_IMAGE
 COPY --from=builder /go/src/github.com/kubernetes-sigs/aws-ebs-csi-driver/bin/aws-ebs-csi-driver /bin/aws-ebs-csi-driver

@@ -210,7 +210,7 @@ bin:
 	@mkdir -p $@
 
 bin/$(BINARY): $(GO_SOURCES) | bin
-	CGO_ENABLED=1 GOEXPERIMENT=boringcrypto GOOS=$(OS) GOARCH=$(ARCH) go build -mod=readonly -ldflags ${LDFLAGS} -o $@ -buildvcs=false ./cmd/
+	GOOS=$(OS) GOARCH=$(ARCH) go build -mod=readonly -ldflags ${LDFLAGS} -o $@ ./cmd/
 
 .PHONY: all-image-registry
 all-image-registry: $(addprefix sub-image-,$(ALL_OS_ARCH_OSVERSION))
