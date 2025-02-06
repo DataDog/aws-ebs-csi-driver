@@ -3,7 +3,7 @@ include: https://gitlab-templates.ddbuild.io/compute-delivery/v2/compute-deliver
 test:
   stage: verify
   tags: [ "arch:amd64" ]
-  image: registry.ddbuild.io/images/mirror/golang:1.22.2
+  image: registry.ddbuild.io/images/mirror/library/golang:1.23.5
   variables:
     GOTOOLCHAIN: "auto"
     KUBERNETES_CPU_REQUEST: "4"
@@ -15,7 +15,9 @@ test:
 verify-fips:
   stage: build
   tags: [ "runner:main" ]
-  image: registry.ddbuild.io/images/mirror/golang:1.23.3
+  image: registry.ddbuild.io/images/mirror/library/golang:1.23.5
+  variables:
+    GOTOOLCHAIN: "auto"
   script:
     - make bin/aws-ebs-csi-driver
     - go tool nm bin/aws-ebs-csi-driver | grep -E 'sig.FIPSOnly|sig.BoringCrypto|sig.StandardCrypto'
