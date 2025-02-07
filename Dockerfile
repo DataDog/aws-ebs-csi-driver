@@ -30,6 +30,7 @@ ARG TARGETARCH
 ARG VERSION
 ARG GOEXPERIMENT
 RUN --mount=type=cache,target=/gomodcache --mount=type=cache,target=/gocache OS=$TARGETOS ARCH=$TARGETARCH make
+RUN go tool nm /go/src/github.com/kubernetes-sigs/aws-ebs-csi-driver/bin/aws-ebs-csi-driver | grep -E 'sig.FIPSOnly|sig.BoringCrypto|sig.StandardCrypto'
 
 FROM $BASE_IMAGE
 COPY --from=builder /go/src/github.com/kubernetes-sigs/aws-ebs-csi-driver/bin/aws-ebs-csi-driver /bin/aws-ebs-csi-driver
