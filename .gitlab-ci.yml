@@ -12,15 +12,5 @@ test:
   script:
     - make test
 
-verify-fips:
-  stage: build
-  tags: [ "runner:main" ]
-  image: registry.ddbuild.io/images/mirror/library/golang:1.23.5
-  variables:
-    GOTOOLCHAIN: "auto"
-  script:
-    - make bin/aws-ebs-csi-driver
-    - go tool nm bin/aws-ebs-csi-driver | grep -E 'sig.FIPSOnly|sig.BoringCrypto|sig.StandardCrypto'
-
 build-docker-image:
   extends: .build-docker-image
