@@ -1,3 +1,901 @@
+# 1.42.0
+
+## Changes by Kind
+
+### Other
+
+- Remove controller metrics from the node service. ([#2409](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2409), [@mdzraf](https://github.com/mdzraf))
+- Add more descriptive Prometheus `HELP` texts to each metric from the controller. ([#2418](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2418), [@mdzraf](https://github.com/mdzraf))
+
+## Dependencies
+
+### Added
+- github.com/prashantv/gostub: [v1.1.0](https://github.com/prashantv/gostub/tree/v1.1.0)
+- go.uber.org/automaxprocs: v1.6.0
+
+### Changed
+- cel.dev/expr: v0.22.0 → v0.23.1
+- github.com/aws/aws-sdk-go-v2/config: [v1.29.9 → v1.29.13](https://github.com/aws/aws-sdk-go-v2/compare/config/v1.29.9...config/v1.29.13)
+- github.com/aws/aws-sdk-go-v2/credentials: [v1.17.62 → v1.17.66](https://github.com/aws/aws-sdk-go-v2/compare/credentials/v1.17.62...credentials/v1.17.66)
+- github.com/aws/aws-sdk-go-v2/service/ec2: [v1.209.0 → v1.211.2](https://github.com/aws/aws-sdk-go-v2/compare/service/ec2/v1.209.0...service/ec2/v1.211.2)
+- github.com/aws/aws-sdk-go-v2/service/sso: [v1.25.1 → v1.25.3](https://github.com/aws/aws-sdk-go-v2/compare/service/sso/v1.25.1...service/sso/v1.25.3)
+- github.com/aws/aws-sdk-go-v2/service/ssooidc: [v1.29.1 → v1.30.1](https://github.com/aws/aws-sdk-go-v2/compare/service/ssooidc/v1.29.1...service/ssooidc/v1.30.1)
+- github.com/aws/aws-sdk-go-v2/service/sts: [v1.33.17 → v1.33.18](https://github.com/aws/aws-sdk-go-v2/compare/service/sts/v1.33.17...service/sts/v1.33.18)
+- github.com/fsnotify/fsnotify: [v1.8.0 → v1.9.0](https://github.com/fsnotify/fsnotify/compare/v1.8.0...v1.9.0)
+- github.com/fxamacker/cbor/v2: [v2.7.0 → v2.8.0](https://github.com/fxamacker/cbor/compare/v2.7.0...v2.8.0)
+- github.com/go-openapi/jsonpointer: [v0.21.0 → v0.21.1](https://github.com/go-openapi/jsonpointer/compare/v0.21.0...v0.21.1)
+- github.com/go-openapi/swag: [v0.23.0 → v0.23.1](https://github.com/go-openapi/swag/compare/v0.23.0...v0.23.1)
+- github.com/google/pprof: [9094ed2 → 27863c8](https://github.com/google/pprof/compare/9094ed2...27863c8)
+- github.com/kubernetes-csi/csi-proxy/client: [v1.2.0 → v1.2.1](https://github.com/kubernetes-csi/csi-proxy/compare/client/v1.2.0...client/v1.2.1)
+- github.com/onsi/ginkgo/v2: [v2.23.0 → v2.23.4](https://github.com/onsi/ginkgo/compare/v2.23.0...v2.23.4)
+- github.com/onsi/gomega: [v1.36.2 → v1.37.0](https://github.com/onsi/gomega/compare/v1.36.2...v1.37.0)
+- github.com/opencontainers/runc: [v1.2.5 → v1.2.6](https://github.com/opencontainers/runc/compare/v1.2.5...v1.2.6)
+- github.com/opencontainers/selinux: [v1.11.1 → v1.12.0](https://github.com/opencontainers/selinux/compare/v1.11.1...v1.12.0)
+- github.com/prometheus/client_golang: [v1.21.1 → v1.22.0](https://github.com/prometheus/client_golang/compare/v1.21.1...v1.22.0)
+- github.com/prometheus/common: [v0.62.0 → v0.63.0](https://github.com/prometheus/common/compare/v0.62.0...v0.63.0)
+- github.com/prometheus/procfs: [v0.15.1 → v0.16.0](https://github.com/prometheus/procfs/compare/v0.15.1...v0.16.0)
+- go.etcd.io/etcd/api/v3: v3.5.19 → v3.5.21
+- go.etcd.io/etcd/client/pkg/v3: v3.5.19 → v3.5.21
+- go.etcd.io/etcd/client/v3: v3.5.19 → v3.5.21
+- golang.org/x/crypto: v0.36.0 → v0.37.0
+- golang.org/x/net: v0.37.0 → v0.39.0
+- golang.org/x/oauth2: v0.28.0 → v0.29.0
+- golang.org/x/sync: v0.12.0 → v0.13.0
+- golang.org/x/sys: v0.31.0 → v0.32.0
+- golang.org/x/term: v0.30.0 → v0.31.0
+- golang.org/x/text: v0.23.0 → v0.24.0
+- golang.org/x/tools: v0.31.0 → v0.32.0
+- google.golang.org/grpc: v1.71.0 → v1.71.1
+- google.golang.org/protobuf: v1.36.5 → v1.36.6
+
+# v1.41.0
+
+### Note on Deprecated Metrics
+
+- Prior to this release, disabled metrics (prefixed with `cloudprovider_aws_`) were on by default, they are now disabled by default. Equivalent metrics are emitted with the prefix `aws_ebs_csi_`. The old metric names may be re-enabled via the CLI parameter `--deprecated-metrics=true` on the controller (on Helm via the `controller.additionalArgs` parameter). The old metric names are deprecated and the CLI parameter will be removed in a future version of the EBS CSI Driver.
+
+### Feature
+
+- Error `code` label is now supported EBS CSI API request error metrics ([#2355](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2355), [@engedaam](https://github.com/engedaam))
+
+### Documentation
+
+- Fix metrics.md To Show How to Export Leader Pods for Sidecars ([#2362](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2362), [@mdzraf](https://github.com/mdzraf))
+
+### Bug or Regression
+
+- Fix p4d.24xlarge reporting wrong volume limit ([#2353](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2353), [@ElijahQuinones](https://github.com/ElijahQuinones))
+- Skip IMDS call if AWS_EC2_METADATA_DISABLED=true ([#2342](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2342), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+### Other
+
+- Add Logs On How We Calculate CSINode.allocatables in NodeGetInfo ([#2372](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2372), [@mdzraf](https://github.com/mdzraf))
+- Sets `deprecatedMetrics` to false by default ([#2390](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2390), [@mdzraf](https://github.com/mdzraf))
+
+## Dependencies
+
+### Added
+- github.com/containerd/errdefs/pkg: [v0.3.0](https://github.com/containerd/errdefs/tree/pkg/v0.3.0)
+- github.com/envoyproxy/go-control-plane/envoy: [v1.32.4](https://github.com/envoyproxy/go-control-plane/tree/envoy/v1.32.4)
+- github.com/envoyproxy/go-control-plane/ratelimit: [v0.1.0](https://github.com/envoyproxy/go-control-plane/tree/ratelimit/v0.1.0)
+- github.com/opencontainers/cgroups: [v0.0.1](https://github.com/opencontainers/cgroups/tree/v0.0.1)
+- github.com/santhosh-tekuri/jsonschema/v5: [v5.3.1](https://github.com/santhosh-tekuri/jsonschema/tree/v5.3.1)
+- sigs.k8s.io/randfill: v1.0.0
+
+### Changed
+- cel.dev/expr: v0.20.0 → v0.22.0
+- cloud.google.com/go/compute/metadata: v0.5.2 → v0.6.0
+- github.com/aws/aws-sdk-go-v2/config: [v1.29.6 → v1.29.9](https://github.com/aws/aws-sdk-go-v2/compare/config/v1.29.6...config/v1.29.9)
+- github.com/aws/aws-sdk-go-v2/credentials: [v1.17.59 → v1.17.62](https://github.com/aws/aws-sdk-go-v2/compare/credentials/v1.17.59...credentials/v1.17.62)
+- github.com/aws/aws-sdk-go-v2/feature/ec2/imds: [v1.16.28 → v1.16.30](https://github.com/aws/aws-sdk-go-v2/compare/feature/ec2/imds/v1.16.28...feature/ec2/imds/v1.16.30)
+- github.com/aws/aws-sdk-go-v2/internal/configsources: [v1.3.32 → v1.3.34](https://github.com/aws/aws-sdk-go-v2/compare/internal/configsources/v1.3.32...internal/configsources/v1.3.34)
+- github.com/aws/aws-sdk-go-v2/internal/endpoints/v2: [v2.6.32 → v2.6.34](https://github.com/aws/aws-sdk-go-v2/compare/internal/endpoints/v2/v2.6.32...internal/endpoints/v2/v2.6.34)
+- github.com/aws/aws-sdk-go-v2/internal/ini: [v1.8.2 → v1.8.3](https://github.com/aws/aws-sdk-go-v2/compare/internal/ini/v1.8.2...internal/ini/v1.8.3)
+- github.com/aws/aws-sdk-go-v2/service/ec2: [v1.203.0 → v1.209.0](https://github.com/aws/aws-sdk-go-v2/compare/service/ec2/v1.203.0...service/ec2/v1.209.0)
+- github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding: [v1.12.2 → v1.12.3](https://github.com/aws/aws-sdk-go-v2/compare/service/internal/accept-encoding/v1.12.2...service/internal/accept-encoding/v1.12.3)
+- github.com/aws/aws-sdk-go-v2/service/internal/presigned-url: [v1.12.13 → v1.12.15](https://github.com/aws/aws-sdk-go-v2/compare/service/internal/presigned-url/v1.12.13...service/internal/presigned-url/v1.12.15)
+- github.com/aws/aws-sdk-go-v2/service/sso: [v1.24.15 → v1.25.1](https://github.com/aws/aws-sdk-go-v2/compare/service/sso/v1.24.15...service/sso/v1.25.1)
+- github.com/aws/aws-sdk-go-v2/service/ssooidc: [v1.28.14 → v1.29.1](https://github.com/aws/aws-sdk-go-v2/compare/service/ssooidc/v1.28.14...service/ssooidc/v1.29.1)
+- github.com/aws/aws-sdk-go-v2/service/sts: [v1.33.14 → v1.33.17](https://github.com/aws/aws-sdk-go-v2/compare/service/sts/v1.33.14...service/sts/v1.33.17)
+- github.com/aws/aws-sdk-go-v2: [v1.36.1 → v1.36.3](https://github.com/aws/aws-sdk-go-v2/compare/v1.36.1...v1.36.3)
+- github.com/aws/smithy-go: [v1.22.2 → v1.22.3](https://github.com/aws/smithy-go/compare/v1.22.2...v1.22.3)
+- github.com/census-instrumentation/opencensus-proto: [v0.4.1 → v0.2.1](https://github.com/census-instrumentation/opencensus-proto/compare/v0.4.1...v0.2.1)
+- github.com/cilium/ebpf: [v0.16.0 → v0.17.3](https://github.com/cilium/ebpf/compare/v0.16.0...v0.17.3)
+- github.com/cncf/xds/go: [b4127c9 → cff3c89](https://github.com/cncf/xds/compare/b4127c9...cff3c89)
+- github.com/containerd/errdefs: [v0.1.0 → v1.0.0](https://github.com/containerd/errdefs/compare/v0.1.0...v1.0.0)
+- github.com/containerd/typeurl/v2: [v2.2.0 → v2.2.3](https://github.com/containerd/typeurl/compare/v2.2.0...v2.2.3)
+- github.com/emicklei/go-restful/v3: [v3.12.1 → v3.12.2](https://github.com/emicklei/go-restful/compare/v3.12.1...v3.12.2)
+- github.com/envoyproxy/go-control-plane: [v0.13.1 → v0.13.4](https://github.com/envoyproxy/go-control-plane/compare/v0.13.1...v0.13.4)
+- github.com/envoyproxy/protoc-gen-validate: [v1.1.0 → v1.2.1](https://github.com/envoyproxy/protoc-gen-validate/compare/v1.1.0...v1.2.1)
+- github.com/golang/glog: [v1.2.3 → v1.2.4](https://github.com/golang/glog/compare/v1.2.3...v1.2.4)
+- github.com/google/cadvisor: [v0.51.0 → v0.52.1](https://github.com/google/cadvisor/compare/v0.51.0...v0.52.1)
+- github.com/google/go-cmp: [v0.6.0 → v0.7.0](https://github.com/google/go-cmp/compare/v0.6.0...v0.7.0)
+- github.com/google/pprof: [d0013a5 → 9094ed2](https://github.com/google/pprof/compare/d0013a5...9094ed2)
+- github.com/grpc-ecosystem/grpc-gateway/v2: [v2.26.1 → v2.26.3](https://github.com/grpc-ecosystem/grpc-gateway/compare/v2.26.1...v2.26.3)
+- github.com/klauspost/compress: [v1.17.11 → v1.18.0](https://github.com/klauspost/compress/compare/v1.17.11...v1.18.0)
+- github.com/matttproud/golang_protobuf_extensions: [v1.0.2 → v1.0.1](https://github.com/matttproud/golang_protobuf_extensions/compare/v1.0.2...v1.0.1)
+- github.com/onsi/ginkgo/v2: [v2.22.2 → v2.23.0](https://github.com/onsi/ginkgo/compare/v2.22.2...v2.23.0)
+- github.com/opencontainers/image-spec: [v1.1.0 → v1.1.1](https://github.com/opencontainers/image-spec/compare/v1.1.0...v1.1.1)
+- github.com/opencontainers/runtime-spec: [v1.2.0 → v1.2.1](https://github.com/opencontainers/runtime-spec/compare/v1.2.0...v1.2.1)
+- github.com/prometheus/client_golang: [v1.20.5 → v1.21.1](https://github.com/prometheus/client_golang/compare/v1.20.5...v1.21.1)
+- github.com/vishvananda/netlink: [b1ce50c → 62fb240](https://github.com/vishvananda/netlink/compare/b1ce50c...62fb240)
+- go.etcd.io/etcd/api/v3: v3.5.18 → v3.5.19
+- go.etcd.io/etcd/client/pkg/v3: v3.5.18 → v3.5.19
+- go.etcd.io/etcd/client/v3: v3.5.18 → v3.5.19
+- go.opentelemetry.io/contrib/detectors/gcp: v1.32.0 → v1.34.0
+- go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc: v0.59.0 → v0.60.0
+- go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp: v0.59.0 → v0.60.0
+- go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc: v1.34.0 → v1.35.0
+- go.opentelemetry.io/otel/exporters/otlp/otlptrace: v1.34.0 → v1.35.0
+- go.opentelemetry.io/otel/metric: v1.34.0 → v1.35.0
+- go.opentelemetry.io/otel/sdk/metric: v1.32.0 → v1.35.0
+- go.opentelemetry.io/otel/sdk: v1.34.0 → v1.35.0
+- go.opentelemetry.io/otel/trace: v1.34.0 → v1.35.0
+- go.opentelemetry.io/otel: v1.34.0 → v1.35.0
+- golang.org/x/crypto: v0.33.0 → v0.36.0
+- golang.org/x/exp: eff6e97 → 054e65f
+- golang.org/x/mod: v0.23.0 → v0.24.0
+- golang.org/x/net: v0.35.0 → v0.37.0
+- golang.org/x/oauth2: v0.26.0 → v0.28.0
+- golang.org/x/sync: v0.11.0 → v0.12.0
+- golang.org/x/sys: v0.30.0 → v0.31.0
+- golang.org/x/term: v0.29.0 → v0.30.0
+- golang.org/x/text: v0.22.0 → v0.23.0
+- golang.org/x/time: v0.10.0 → v0.11.0
+- golang.org/x/tools: v0.30.0 → v0.31.0
+- google.golang.org/genproto/googleapis/api: 5a70512 → 81fb87f
+- google.golang.org/genproto/googleapis/rpc: 5a70512 → 81fb87f
+- google.golang.org/grpc: v1.70.0 → v1.71.0
+- k8s.io/api: v0.32.2 → v0.32.3
+- k8s.io/apiextensions-apiserver: v0.32.2 → v0.32.3
+- k8s.io/apimachinery: v0.32.2 → v0.32.3
+- k8s.io/apiserver: v0.32.2 → v0.32.3
+- k8s.io/cli-runtime: v0.32.2 → v0.32.3
+- k8s.io/client-go: v0.32.2 → v0.32.3
+- k8s.io/cloud-provider: v0.32.2 → v0.32.3
+- k8s.io/cluster-bootstrap: v0.32.2 → v0.32.3
+- k8s.io/code-generator: v0.32.2 → v0.32.3
+- k8s.io/component-base: v0.32.2 → v0.32.3
+- k8s.io/component-helpers: v0.32.2 → v0.32.3
+- k8s.io/controller-manager: v0.32.2 → v0.32.3
+- k8s.io/cri-api: v0.32.2 → v0.32.3
+- k8s.io/cri-client: v0.32.2 → v0.32.3
+- k8s.io/csi-translation-lib: v0.32.2 → v0.32.3
+- k8s.io/dynamic-resource-allocation: v0.32.2 → v0.32.3
+- k8s.io/endpointslice: v0.32.2 → v0.32.3
+- k8s.io/externaljwt: v0.32.2 → v0.32.3
+- k8s.io/kms: v0.32.2 → v0.32.3
+- k8s.io/kube-aggregator: v0.32.2 → v0.32.3
+- k8s.io/kube-controller-manager: v0.32.2 → v0.32.3
+- k8s.io/kube-openapi: 2c72e55 → e5f78fe
+- k8s.io/kube-proxy: v0.32.2 → v0.32.3
+- k8s.io/kube-scheduler: v0.32.2 → v0.32.3
+- k8s.io/kubectl: v0.32.2 → v0.32.3
+- k8s.io/kubelet: v0.32.2 → v0.32.3
+- k8s.io/kubernetes: v1.32.2 → v1.32.3
+- k8s.io/metrics: v0.32.2 → v0.32.3
+- k8s.io/mount-utils: v0.32.2 → v0.32.3
+- k8s.io/pod-security-admission: v0.32.2 → v0.32.3
+- k8s.io/sample-apiserver: v0.32.2 → v0.32.3
+- sigs.k8s.io/apiserver-network-proxy/konnectivity-client: v0.31.2 → v0.32.0
+- sigs.k8s.io/structured-merge-diff/v4: v4.5.0 → v4.6.0
+
+### Removed
+- cloud.google.com/go/compute: v1.25.1
+- github.com/xeipuuv/gojsonpointer: [4e3ac27](https://github.com/xeipuuv/gojsonpointer/tree/4e3ac27)
+- github.com/xeipuuv/gojsonreference: [bd5ef7b](https://github.com/xeipuuv/gojsonreference/tree/bd5ef7b)
+- github.com/xeipuuv/gojsonschema: [v1.2.0](https://github.com/xeipuuv/gojsonschema/tree/v1.2.0)
+# v1.40.1
+
+### Feature
+
+- Error `code` label is now supported EBS CSI API request error metrics ([#2355](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2355), [@engedaam](https://github.com/engedaam))
+
+### Dependencies
+
+- Fix vuln GO-2025-3487 ([#2382](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2382), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+# v1.40.0
+
+#### [Deprecation announcement] AWS Snow Family device support for the EBS CSI Driver
+
+Support for the EBS CSI Driver on [AWS Snow Family devices](https://aws.amazon.com/snowball/) is deprecated, effective immediately. No further Snow-specific bugfixes or feature requests will be merged. The existing functionality for Snow devices will be removed in the 1.43 release of the EBS CSI Driver. This announcement does not affect the support of the EBS CSI Driver on other platforms, such as [Amazon EC2](https://aws.amazon.com/ec2/) or EC2 on [AWS Outposts](https://aws.amazon.com/outposts/). For any questions related to this announcement, please comment on this issue [#2365](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/2365) or open a new issue.
+
+#### Update to the EBS CSI Driver IAM Policy
+
+If you are not using the AmazonEBSCSIDriverPolicy managed policy, a change to your EBS CSI Driver policy may be needed. For more information and remediation steps, see [GitHub issue #2190](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/2190). As of 2025-01-13: AWS updated the `AmazonEBSCSIDriverPolicy` managed policy in all AWS partitions. Any driver installation referencing this managed policy has been updated automatically and no action is needed on your part. This change affects all versions of the EBS CSI Driver and action may be required even on clusters where the driver is not upgraded. This will be the last release with this warning message.
+
+### Feature
+
+Support String Interpolation for Modifying Tags On Existing Volumes Through VAC ([#2093](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2093), [@mdzraf](https://github.com/mdzraf))
+
+### Bug or Regression
+
+Fix raw pointer log in `EnableFastSnapshotRestores` ([#2334](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2334), [@torredil](https://github.com/torredil))
+
+### Documentation
+
+- Add EBS-backed Generic Ephemeral Volume example ([#2310](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2310), [@AndrewSirenko](https://github.com/AndrewSirenko))
+- Add `ebs-scale-test` tool for running EBS CSI Driver scalability tests ([#2292](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2292), [@AndrewSirenko](https://github.com/AndrewSirenko))
+- Add volume expansion & modification scalability test type to `ebs-scale-test` tool ([#2330](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2330), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+## Dependencies
+
+### Changed
+- cel.dev/expr: v0.19.1 → v0.20.0
+- github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp: [v1.24.2 → v1.25.0](https://github.com/GoogleCloudPlatform/opentelemetry-operations-go/compare/detectors/gcp/v1.24.2...detectors/gcp/v1.25.0)
+- github.com/aws/aws-sdk-go-v2/config: [v1.29.1 → v1.29.6](https://github.com/aws/aws-sdk-go-v2/compare/config/v1.29.1...config/v1.29.6)
+- github.com/aws/aws-sdk-go-v2/credentials: [v1.17.54 → v1.17.59](https://github.com/aws/aws-sdk-go-v2/compare/credentials/v1.17.54...credentials/v1.17.59)
+- github.com/aws/aws-sdk-go-v2/feature/ec2/imds: [v1.16.24 → v1.16.28](https://github.com/aws/aws-sdk-go-v2/compare/feature/ec2/imds/v1.16.24...feature/ec2/imds/v1.16.28)
+- github.com/aws/aws-sdk-go-v2/internal/configsources: [v1.3.28 → v1.3.32](https://github.com/aws/aws-sdk-go-v2/compare/internal/configsources/v1.3.28...internal/configsources/v1.3.32)
+- github.com/aws/aws-sdk-go-v2/internal/endpoints/v2: [v2.6.28 → v2.6.32](https://github.com/aws/aws-sdk-go-v2/compare/internal/endpoints/v2/v2.6.28...internal/endpoints/v2/v2.6.32)
+- github.com/aws/aws-sdk-go-v2/internal/ini: [v1.8.1 → v1.8.2](https://github.com/aws/aws-sdk-go-v2/compare/internal/ini/v1.8.1...internal/ini/v1.8.2)
+- github.com/aws/aws-sdk-go-v2/service/ec2: [v1.200.0 → v1.203.0](https://github.com/aws/aws-sdk-go-v2/compare/service/ec2/v1.200.0...service/ec2/v1.203.0)
+- github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding: [v1.12.1 → v1.12.2](https://github.com/aws/aws-sdk-go-v2/compare/service/internal/accept-encoding/v1.12.1...service/internal/accept-encoding/v1.12.2)
+- github.com/aws/aws-sdk-go-v2/service/internal/presigned-url: [v1.12.9 → v1.12.13](https://github.com/aws/aws-sdk-go-v2/compare/service/internal/presigned-url/v1.12.9...service/internal/presigned-url/v1.12.13)
+- github.com/aws/aws-sdk-go-v2/service/sso: [v1.24.11 → v1.24.15](https://github.com/aws/aws-sdk-go-v2/compare/service/sso/v1.24.11...service/sso/v1.24.15)
+- github.com/aws/aws-sdk-go-v2/service/ssooidc: [v1.28.10 → v1.28.14](https://github.com/aws/aws-sdk-go-v2/compare/service/ssooidc/v1.28.10...service/ssooidc/v1.28.14)
+- github.com/aws/aws-sdk-go-v2/service/sts: [v1.33.9 → v1.33.14](https://github.com/aws/aws-sdk-go-v2/compare/service/sts/v1.33.9...service/sts/v1.33.14)
+- github.com/aws/aws-sdk-go-v2: [v1.33.0 → v1.36.1](https://github.com/aws/aws-sdk-go-v2/compare/v1.33.0...v1.36.1)
+- github.com/cpuguy83/go-md2man/v2: [v2.0.4 → v2.0.6](https://github.com/cpuguy83/go-md2man/compare/v2.0.4...v2.0.6)
+- github.com/cyphar/filepath-securejoin: [v0.3.6 → v0.4.1](https://github.com/cyphar/filepath-securejoin/compare/v0.3.6...v0.4.1)
+- github.com/golang/glog: [v1.2.2 → v1.2.3](https://github.com/golang/glog/compare/v1.2.2...v1.2.3)
+- github.com/google/pprof: [997b0b7 → d0013a5](https://github.com/google/pprof/compare/997b0b7...d0013a5)
+- github.com/grpc-ecosystem/grpc-gateway/v2: [v2.26.0 → v2.26.1](https://github.com/grpc-ecosystem/grpc-gateway/compare/v2.26.0...v2.26.1)
+- github.com/kubernetes-csi/csi-proxy/client: [v1.1.3 → v1.2.0](https://github.com/kubernetes-csi/csi-proxy/compare/client/v1.1.3...client/v1.2.0)
+- github.com/opencontainers/runc: [v1.2.4 → v1.2.5](https://github.com/opencontainers/runc/compare/v1.2.4...v1.2.5)
+- github.com/spf13/cobra: [v1.8.1 → v1.9.1](https://github.com/spf13/cobra/compare/v1.8.1...v1.9.1)
+- github.com/spf13/pflag: [v1.0.5 → v1.0.6](https://github.com/spf13/pflag/compare/v1.0.5...v1.0.6)
+- go.etcd.io/etcd/api/v3: v3.5.17 → v3.5.18
+- go.etcd.io/etcd/client/pkg/v3: v3.5.17 → v3.5.18
+- go.etcd.io/etcd/client/v3: v3.5.17 → v3.5.18
+- go.opentelemetry.io/contrib/detectors/gcp: v1.31.0 → v1.32.0
+- go.opentelemetry.io/otel/sdk/metric: v1.31.0 → v1.32.0
+- golang.org/x/crypto: v0.32.0 → v0.33.0
+- golang.org/x/exp: 7588d65 → eff6e97
+- golang.org/x/mod: v0.22.0 → v0.23.0
+- golang.org/x/net: v0.34.0 → v0.35.0
+- golang.org/x/oauth2: v0.25.0 → v0.26.0
+- golang.org/x/sync: v0.10.0 → v0.11.0
+- golang.org/x/sys: v0.29.0 → v0.30.0
+- golang.org/x/term: v0.28.0 → v0.29.0
+- golang.org/x/text: v0.21.0 → v0.22.0
+- golang.org/x/time: v0.9.0 → v0.10.0
+- golang.org/x/tools: v0.29.0 → v0.30.0
+- google.golang.org/genproto/googleapis/api: 138b5a5 → 5a70512
+- google.golang.org/genproto/googleapis/rpc: 138b5a5 → 5a70512
+- google.golang.org/grpc: v1.69.4 → v1.70.0
+- google.golang.org/protobuf: v1.36.3 → v1.36.5
+- k8s.io/api: v0.32.1 → v0.32.2
+- k8s.io/apiextensions-apiserver: v0.32.1 → v0.32.2
+- k8s.io/apimachinery: v0.32.1 → v0.32.2
+- k8s.io/apiserver: v0.32.1 → v0.32.2
+- k8s.io/cli-runtime: v0.32.1 → v0.32.2
+- k8s.io/client-go: v0.32.1 → v0.32.2
+- k8s.io/cloud-provider: v0.32.1 → v0.32.2
+- k8s.io/cluster-bootstrap: v0.32.1 → v0.32.2
+- k8s.io/code-generator: v0.32.1 → v0.32.2
+- k8s.io/component-base: v0.32.1 → v0.32.2
+- k8s.io/component-helpers: v0.32.1 → v0.32.2
+- k8s.io/controller-manager: v0.32.1 → v0.32.2
+- k8s.io/cri-api: v0.32.1 → v0.32.2
+- k8s.io/cri-client: v0.32.1 → v0.32.2
+- k8s.io/csi-translation-lib: v0.32.1 → v0.32.2
+- k8s.io/dynamic-resource-allocation: v0.32.1 → v0.32.2
+- k8s.io/endpointslice: v0.32.1 → v0.32.2
+- k8s.io/externaljwt: v0.32.1 → v0.32.2
+- k8s.io/kms: v0.32.1 → v0.32.2
+- k8s.io/kube-aggregator: v0.32.1 → v0.32.2
+- k8s.io/kube-controller-manager: v0.32.1 → v0.32.2
+- k8s.io/kube-proxy: v0.32.1 → v0.32.2
+- k8s.io/kube-scheduler: v0.32.1 → v0.32.2
+- k8s.io/kubectl: v0.32.1 → v0.32.2
+- k8s.io/kubelet: v0.32.1 → v0.32.2
+- k8s.io/kubernetes: v1.32.1 → v1.32.2
+- k8s.io/metrics: v0.32.1 → v0.32.2
+- k8s.io/mount-utils: v0.32.1 → v0.32.2
+- k8s.io/pod-security-admission: v0.32.1 → v0.32.2
+- k8s.io/sample-apiserver: v0.32.1 → v0.32.2
+- sigs.k8s.io/apiserver-network-proxy/konnectivity-client: v0.31.1 → v0.31.2
+
+### Removed
+- github.com/jmespath/go-jmespath: [v0.4.0](https://github.com/jmespath/go-jmespath/tree/v0.4.0)
+ctl: v0.31.2 → v0.31.4
+- k8s.io/kubelet: v0.31.2 → v0.31.4
+- k8s.io/kubernetes: v1.31.2 → v1.31.4
+- k8s.io/metrics: v0.31.2 → v0.31.4
+- k8s.io/mount-utils: v0.31.2 → v0.31.4
+- k8s.io/pod-security-admission: v0.31.2 → v0.31.4
+- k8s.io/sample-apiserver: v0.31.2 → v0.31.4
+- k8s.io/utils: 6fe5fd8 → 24370be
+- sigs.k8s.io/apiserver-network-proxy/konnectivity-client: v0.31.0 → v0.31.1
+- sigs.k8s.io/structured-merge-diff/v4: v4.4.1 → v4.4.3
+# v1.39.0
+
+#### [ACTION REQUIRED] Update to the EBS CSI Driver IAM Policy
+
+_(This warning is the same as previous releases and can be disregarded if you have already taken appropriate action)_
+
+Due to an upcoming change in handling of IAM polices for the CreateVolume API when creating a volume from an EBS snapshot, a change to your EBS CSI Driver policy may be needed. For more information and remediation steps, see [GitHub issue #2190](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/2190). This change affects all versions of the EBS CSI Driver and action may be required even on clusters where the driver is not upgraded.
+
+### Documentation
+
+- Note that tags-only modification does not lead to 6-hour modification cooldown period. ([#2275](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2275), [@AndrewSirenko](https://github.com/AndrewSirenko))
+- Update the example IAM policy to be in sync with the AWS managed policy ([#2287](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2287), [@ConnorJC3](https://github.com/ConnorJC3))
+
+### Bug or Regression
+
+- Fix backoff when waiting for volume creation ([#2303](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2303), [@khizunov](https://github.com/khizunov))
+
+## Dependencies
+
+### Added
+- cloud.google.com/go/compute: v1.25.1
+- github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp: [v1.24.2](https://github.com/GoogleCloudPlatform/opentelemetry-operations-go/tree/detectors/gcp/v1.24.2)
+- github.com/Microsoft/hnslib: [v0.0.8](https://github.com/Microsoft/hnslib/tree/v0.0.8)
+- github.com/containerd/containerd/api: [v1.8.0](https://github.com/containerd/containerd/tree/api/v1.8.0)
+- github.com/containerd/errdefs: [v0.1.0](https://github.com/containerd/errdefs/tree/v0.1.0)
+- github.com/containerd/log: [v0.1.0](https://github.com/containerd/log/tree/v0.1.0)
+- github.com/containerd/typeurl/v2: [v2.2.0](https://github.com/containerd/typeurl/tree/v2.2.0)
+- github.com/docker/docker: [v26.1.4+incompatible](https://github.com/docker/docker/tree/v26.1.4)
+- github.com/docker/go-connections: [v0.5.0](https://github.com/docker/go-connections/tree/v0.5.0)
+- github.com/kubernetes-csi/csi-test/v5: [v5.3.1](https://github.com/kubernetes-csi/csi-test/tree/v5.3.1)
+- github.com/moby/docker-image-spec: [v1.3.1](https://github.com/moby/docker-image-spec/tree/v1.3.1)
+- github.com/morikuni/aec: [v1.0.0](https://github.com/morikuni/aec/tree/v1.0.0)
+- github.com/opencontainers/image-spec: [v1.1.0](https://github.com/opencontainers/image-spec/tree/v1.1.0)
+- github.com/russross/blackfriday: [v1.6.0](https://github.com/russross/blackfriday/tree/v1.6.0)
+- github.com/xeipuuv/gojsonpointer: [4e3ac27](https://github.com/xeipuuv/gojsonpointer/tree/4e3ac27)
+- github.com/xeipuuv/gojsonreference: [bd5ef7b](https://github.com/xeipuuv/gojsonreference/tree/bd5ef7b)
+- github.com/xeipuuv/gojsonschema: [v1.2.0](https://github.com/xeipuuv/gojsonschema/tree/v1.2.0)
+- go.opentelemetry.io/auto/sdk: v1.1.0
+- go.opentelemetry.io/contrib/detectors/gcp: v1.31.0
+- go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp: v1.27.0
+- go.opentelemetry.io/otel/sdk/metric: v1.31.0
+- gotest.tools/v3: v3.0.2
+- k8s.io/externaljwt: v0.32.1
+
+### Changed
+- cloud.google.com/go/compute/metadata: v0.5.0 → v0.5.2
+- github.com/Azure/go-ansiterm: [d185dfc → 306776e](https://github.com/Azure/go-ansiterm/compare/d185dfc...306776e)
+- github.com/armon/circbuf: [bbbad09 → 5111143](https://github.com/armon/circbuf/compare/bbbad09...5111143)
+- github.com/aws/aws-sdk-go-v2/config: [v1.28.6 → v1.29.1](https://github.com/aws/aws-sdk-go-v2/compare/config/v1.28.6...config/v1.29.1)
+- github.com/aws/aws-sdk-go-v2/credentials: [v1.17.47 → v1.17.54](https://github.com/aws/aws-sdk-go-v2/compare/credentials/v1.17.47...credentials/v1.17.54)
+- github.com/aws/aws-sdk-go-v2/feature/ec2/imds: [v1.16.21 → v1.16.24](https://github.com/aws/aws-sdk-go-v2/compare/feature/ec2/imds/v1.16.21...feature/ec2/imds/v1.16.24)
+- github.com/aws/aws-sdk-go-v2/internal/configsources: [v1.3.25 → v1.3.28](https://github.com/aws/aws-sdk-go-v2/compare/internal/configsources/v1.3.25...internal/configsources/v1.3.28)
+- github.com/aws/aws-sdk-go-v2/internal/endpoints/v2: [v2.6.25 → v2.6.28](https://github.com/aws/aws-sdk-go-v2/compare/internal/endpoints/v2/v2.6.25...internal/endpoints/v2/v2.6.28)
+- github.com/aws/aws-sdk-go-v2/service/ec2: [v1.196.0 → v1.200.0](https://github.com/aws/aws-sdk-go-v2/compare/service/ec2/v1.196.0...service/ec2/v1.200.0)
+- github.com/aws/aws-sdk-go-v2/service/internal/presigned-url: [v1.12.6 → v1.12.9](https://github.com/aws/aws-sdk-go-v2/compare/service/internal/presigned-url/v1.12.6...service/internal/presigned-url/v1.12.9)
+- github.com/aws/aws-sdk-go-v2/service/sso: [v1.24.7 → v1.24.11](https://github.com/aws/aws-sdk-go-v2/compare/service/sso/v1.24.7...service/sso/v1.24.11)
+- github.com/aws/aws-sdk-go-v2/service/ssooidc: [v1.28.6 → v1.28.10](https://github.com/aws/aws-sdk-go-v2/compare/service/ssooidc/v1.28.6...service/ssooidc/v1.28.10)
+- github.com/aws/aws-sdk-go-v2/service/sts: [v1.33.2 → v1.33.9](https://github.com/aws/aws-sdk-go-v2/compare/service/sts/v1.33.2...service/sts/v1.33.9)
+- github.com/aws/aws-sdk-go-v2: [v1.32.6 → v1.33.0](https://github.com/aws/aws-sdk-go-v2/compare/v1.32.6...v1.33.0)
+- github.com/aws/smithy-go: [v1.22.1 → v1.22.2](https://github.com/aws/smithy-go/compare/v1.22.1...v1.22.2)
+- github.com/awslabs/volume-modifier-for-k8s: [v0.5.0 → v0.5.1](https://github.com/awslabs/volume-modifier-for-k8s/compare/v0.5.0...v0.5.1)
+- github.com/containerd/ttrpc: [v1.2.2 → v1.2.7](https://github.com/containerd/ttrpc/compare/v1.2.2...v1.2.7)
+- github.com/coredns/corefile-migration: [v1.0.23 → v1.0.24](https://github.com/coredns/corefile-migration/compare/v1.0.23...v1.0.24)
+- github.com/cyphar/filepath-securejoin: [v0.3.5 → v0.3.6](https://github.com/cyphar/filepath-securejoin/compare/v0.3.5...v0.3.6)
+- github.com/envoyproxy/go-control-plane: [v0.13.0 → v0.13.1](https://github.com/envoyproxy/go-control-plane/compare/v0.13.0...v0.13.1)
+- github.com/exponent-io/jsonpath: [d6023ce → 1de76d7](https://github.com/exponent-io/jsonpath/compare/d6023ce...1de76d7)
+- github.com/google/btree: [v1.0.1 → v1.1.3](https://github.com/google/btree/compare/v1.0.1...v1.1.3)
+- github.com/google/cadvisor: [v0.49.0 → v0.51.0](https://github.com/google/cadvisor/compare/v0.49.0...v0.51.0)
+- github.com/google/pprof: [40e02aa → 997b0b7](https://github.com/google/pprof/compare/40e02aa...997b0b7)
+- github.com/gregjones/httpcache: [9cad4c3 → 901d907](https://github.com/gregjones/httpcache/compare/9cad4c3...901d907)
+- github.com/grpc-ecosystem/grpc-gateway/v2: [v2.24.0 → v2.26.0](https://github.com/grpc-ecosystem/grpc-gateway/compare/v2.24.0...v2.26.0)
+- github.com/jonboulle/clockwork: [v0.2.2 → v0.4.0](https://github.com/jonboulle/clockwork/compare/v0.2.2...v0.4.0)
+- github.com/kubernetes-csi/csi-lib-utils: [v0.19.0 → v0.20.0](https://github.com/kubernetes-csi/csi-lib-utils/compare/v0.19.0...v0.20.0)
+- github.com/kubernetes-csi/external-resizer: [v1.12.0 → v1.13.1](https://github.com/kubernetes-csi/external-resizer/compare/v1.12.0...v1.13.1)
+- github.com/mailru/easyjson: [v0.7.7 → v0.9.0](https://github.com/mailru/easyjson/compare/v0.7.7...v0.9.0)
+- github.com/matttproud/golang_protobuf_extensions: [v1.0.1 → v1.0.2](https://github.com/matttproud/golang_protobuf_extensions/compare/v1.0.1...v1.0.2)
+- github.com/mohae/deepcopy: [491d360 → c48cc78](https://github.com/mohae/deepcopy/compare/491d360...c48cc78)
+- github.com/onsi/ginkgo/v2: [v2.22.0 → v2.22.2](https://github.com/onsi/ginkgo/compare/v2.22.0...v2.22.2)
+- github.com/onsi/gomega: [v1.36.1 → v1.36.2](https://github.com/onsi/gomega/compare/v1.36.1...v1.36.2)
+- github.com/opencontainers/runc: [v1.2.3 → v1.2.4](https://github.com/opencontainers/runc/compare/v1.2.3...v1.2.4)
+- github.com/prometheus/common: [v0.61.0 → v0.62.0](https://github.com/prometheus/common/compare/v0.61.0...v0.62.0)
+- github.com/vishvananda/netlink: [v1.1.0 → b1ce50c](https://github.com/vishvananda/netlink/compare/v1.1.0...b1ce50c)
+- github.com/xiang90/probing: [43a291a → a49e3df](https://github.com/xiang90/probing/compare/43a291a...a49e3df)
+- go.etcd.io/bbolt: v1.3.9 → v1.3.11
+- go.etcd.io/etcd/client/v2: v2.305.13 → v2.305.16
+- go.etcd.io/etcd/pkg/v3: v3.5.13 → v3.5.16
+- go.etcd.io/etcd/raft/v3: v3.5.13 → v3.5.16
+- go.etcd.io/etcd/server/v3: v3.5.13 → v3.5.16
+- go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc: v0.57.0 → v0.59.0
+- go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp: v0.57.0 → v0.59.0
+- go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc: v1.32.0 → v1.34.0
+- go.opentelemetry.io/otel/exporters/otlp/otlptrace: v1.32.0 → v1.34.0
+- go.opentelemetry.io/otel/metric: v1.32.0 → v1.34.0
+- go.opentelemetry.io/otel/sdk: v1.32.0 → v1.34.0
+- go.opentelemetry.io/otel/trace: v1.32.0 → v1.34.0
+- go.opentelemetry.io/otel: v1.32.0 → v1.34.0
+- go.opentelemetry.io/proto/otlp: v1.4.0 → v1.5.0
+- golang.org/x/crypto: v0.31.0 → v0.32.0
+- golang.org/x/exp: 1829a12 → 7588d65
+- golang.org/x/net: v0.32.0 → v0.34.0
+- golang.org/x/oauth2: v0.24.0 → v0.25.0
+- golang.org/x/sys: v0.28.0 → v0.29.0
+- golang.org/x/term: v0.27.0 → v0.28.0
+- golang.org/x/time: v0.8.0 → v0.9.0
+- golang.org/x/tools: v0.28.0 → v0.29.0
+- golang.org/x/xerrors: 04be3eb → 5ec99f8
+- google.golang.org/genproto/googleapis/api: e6fa225 → 138b5a5
+- google.golang.org/genproto/googleapis/rpc: e6fa225 → 138b5a5
+- google.golang.org/genproto: b8732ec → ef43131
+- google.golang.org/grpc: v1.68.1 → v1.69.4
+- google.golang.org/protobuf: v1.35.2 → v1.36.3
+- k8s.io/api: v0.31.4 → v0.32.1
+- k8s.io/apiextensions-apiserver: v0.31.4 → v0.32.1
+- k8s.io/apimachinery: v0.31.4 → v0.32.1
+- k8s.io/apiserver: v0.31.4 → v0.32.1
+- k8s.io/cli-runtime: v0.31.4 → v0.32.1
+- k8s.io/client-go: v0.31.4 → v0.32.1
+- k8s.io/cloud-provider: v0.31.4 → v0.32.1
+- k8s.io/cluster-bootstrap: v0.31.4 → v0.32.1
+- k8s.io/code-generator: v0.31.4 → v0.32.1
+- k8s.io/component-base: v0.31.4 → v0.32.1
+- k8s.io/component-helpers: v0.31.4 → v0.32.1
+- k8s.io/controller-manager: v0.31.4 → v0.32.1
+- k8s.io/cri-api: v0.31.4 → v0.32.1
+- k8s.io/cri-client: v0.31.4 → v0.32.1
+- k8s.io/csi-translation-lib: v0.31.4 → v0.32.1
+- k8s.io/dynamic-resource-allocation: v0.31.4 → v0.32.1
+- k8s.io/endpointslice: v0.31.4 → v0.32.1
+- k8s.io/gengo/v2: a7b603a → 2b36238
+- k8s.io/kms: v0.31.4 → v0.32.1
+- k8s.io/kube-aggregator: v0.31.4 → v0.32.1
+- k8s.io/kube-controller-manager: v0.31.4 → v0.32.1
+- k8s.io/kube-openapi: 9959940 → 2c72e55
+- k8s.io/kube-proxy: v0.31.4 → v0.32.1
+- k8s.io/kube-scheduler: v0.31.4 → v0.32.1
+- k8s.io/kubectl: v0.31.4 → v0.32.1
+- k8s.io/kubelet: v0.31.4 → v0.32.1
+- k8s.io/kubernetes: v1.31.4 → v1.32.1
+- k8s.io/metrics: v0.31.4 → v0.32.1
+- k8s.io/mount-utils: v0.31.4 → v0.32.1
+- k8s.io/pod-security-admission: v0.31.4 → v0.32.1
+- k8s.io/sample-apiserver: v0.31.4 → v0.32.1
+- k8s.io/system-validators: v1.8.0 → v1.9.1
+- sigs.k8s.io/kustomize/api: v0.17.2 → v0.18.0
+- sigs.k8s.io/kustomize/kustomize/v5: v5.4.2 → v5.5.0
+- sigs.k8s.io/kustomize/kyaml: v0.17.1 → v0.18.1
+- sigs.k8s.io/structured-merge-diff/v4: v4.4.3 → v4.5.0
+
+### Removed
+- github.com/Microsoft/hcsshim: [v0.8.26](https://github.com/Microsoft/hcsshim/tree/v0.8.26)
+- github.com/checkpoint-restore/go-criu/v5: [v5.3.0](https://github.com/checkpoint-restore/go-criu/tree/v5.3.0)
+- github.com/containerd/cgroups: [v1.1.0](https://github.com/containerd/cgroups/tree/v1.1.0)
+- github.com/daviddengcn/go-colortext: [v1.0.0](https://github.com/daviddengcn/go-colortext/tree/v1.0.0)
+- github.com/go-kit/log: [v0.2.1](https://github.com/go-kit/log/tree/v0.2.1)
+- github.com/go-logfmt/logfmt: [v0.5.1](https://github.com/go-logfmt/logfmt/tree/v0.5.1)
+- github.com/golang/groupcache: [2c02b82](https://github.com/golang/groupcache/tree/2c02b82)
+- github.com/imdario/mergo: [v0.3.16](https://github.com/imdario/mergo/tree/v0.3.16)
+- go.opencensus.io: v0.24.0
+- go.starlark.net: a134d8f
+
+# v1.38.1
+
+_Notice: The v1.38.0 images were promoted incorrectly due to a process error. Do not use any images from `v1.38.0` and upgrade directly to `v1.38.1`._
+
+## Changes by Kind
+
+### Urgent Upgrade Notes
+*(No, really, you MUST read this before you upgrade)*
+
+#### Breaking Metrics Changes
+
+Node plugin metrics have been renamed to follow Prometheus best practices:
+- Added `aws_ebs_csi_` prefix
+- Added `_total` suffix for counters
+- Changed time units from microseconds to seconds for all counters
+
+The controller plugin metrics now use the prefix `aws_ebs_csi_` instead of `cloudprovider_aws_`. The old metric names will still be emitted, but can be disabled via the CLI parameter `--deprecated-metrics=false` on the controller. This will default to `true` in a future version of the EBS CSI Driver. The old metric names (`cloudprovider_aws_*`) are deprecated and will be removed in a future version of the EBS CSI Driver.
+
+#### [ACTION REQUIRED] Update to the EBS CSI Driver IAM Policy
+
+_(This warning is the same as previous releases and can be disregarded if you have already taken appropriate action)_
+
+Due to an upcoming change in handling of IAM polices for the CreateVolume API when creating a volume from an EBS snapshot, a change to your EBS CSI Driver policy may be needed. For more information and remediation steps, see [GitHub issue #2190](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/2190). This change affects all versions of the EBS CSI Driver and action may be required even on clusters where the driver is not upgraded.
+
+### Feature
+
+- Confirm metrics to Prometheus best practices ([#2248](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2248), [@torredil](https://github.com/torredil))
+- Enable the `VolumeAttributesClass` by default for the Kustomize deployment. If you are deploying using the Kustomize manifests on a cluster that does not have the `VolumeAttributesClass` feature gate enabled on the control plane, you may see harmless extra failures related to the feature in the csi-provisioner and/or csi-resizer logs. ([#2240](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2240), [@ConnorJC3](https://github.com/ConnorJC3))
+
+### Bug or Regression
+- Prevent attempting to query NVMe metrics of NVMe volumes from other CSI drivers ([#2239](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2239), [@ConnorJC3](https://github.com/ConnorJC3))
+
+## Dependencies
+
+### Added
+_Nothing has changed._
+
+### Changed
+- cel.dev/expr: v0.16.1 → v0.19.1
+- github.com/aws/aws-sdk-go-v2/config: [v1.28.3 → v1.28.6](https://github.com/aws/aws-sdk-go-v2/compare/config/v1.28.3...config/v1.28.6)
+- github.com/aws/aws-sdk-go-v2/credentials: [v1.17.44 → v1.17.47](https://github.com/aws/aws-sdk-go-v2/compare/credentials/v1.17.44...credentials/v1.17.47)
+- github.com/aws/aws-sdk-go-v2/feature/ec2/imds: [v1.16.19 → v1.16.21](https://github.com/aws/aws-sdk-go-v2/compare/feature/ec2/imds/v1.16.19...feature/ec2/imds/v1.16.21)
+- github.com/aws/aws-sdk-go-v2/internal/configsources: [v1.3.23 → v1.3.25](https://github.com/aws/aws-sdk-go-v2/compare/internal/configsources/v1.3.23...internal/configsources/v1.3.25)
+- github.com/aws/aws-sdk-go-v2/internal/endpoints/v2: [v2.6.23 → v2.6.25](https://github.com/aws/aws-sdk-go-v2/compare/internal/endpoints/v2/v2.6.23...internal/endpoints/v2/v2.6.25)
+- github.com/aws/aws-sdk-go-v2/service/ec2: [v1.187.1 → v1.196.0](https://github.com/aws/aws-sdk-go-v2/compare/service/ec2/v1.187.1...service/ec2/v1.196.0)
+- github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding: [v1.12.0 → v1.12.1](https://github.com/aws/aws-sdk-go-v2/compare/service/internal/accept-encoding/v1.12.0...service/internal/accept-encoding/v1.12.1)
+- github.com/aws/aws-sdk-go-v2/service/internal/presigned-url: [v1.12.4 → v1.12.6](https://github.com/aws/aws-sdk-go-v2/compare/service/internal/presigned-url/v1.12.4...service/internal/presigned-url/v1.12.6)
+- github.com/aws/aws-sdk-go-v2/service/sso: [v1.24.5 → v1.24.7](https://github.com/aws/aws-sdk-go-v2/compare/service/sso/v1.24.5...service/sso/v1.24.7)
+- github.com/aws/aws-sdk-go-v2/service/ssooidc: [v1.28.4 → v1.28.6](https://github.com/aws/aws-sdk-go-v2/compare/service/ssooidc/v1.28.4...service/ssooidc/v1.28.6)
+- github.com/aws/aws-sdk-go-v2/service/sts: [v1.32.4 → v1.33.2](https://github.com/aws/aws-sdk-go-v2/compare/service/sts/v1.32.4...service/sts/v1.33.2)
+- github.com/aws/aws-sdk-go-v2: [v1.32.4 → v1.32.6](https://github.com/aws/aws-sdk-go-v2/compare/v1.32.4...v1.32.6)
+- github.com/aws/smithy-go: [v1.22.0 → v1.22.1](https://github.com/aws/smithy-go/compare/v1.22.0...v1.22.1)
+- github.com/awslabs/volume-modifier-for-k8s: [v0.4.0 → v0.5.0](https://github.com/awslabs/volume-modifier-for-k8s/compare/v0.4.0...v0.5.0)
+- github.com/container-storage-interface/spec: [v1.10.0 → v1.11.0](https://github.com/container-storage-interface/spec/compare/v1.10.0...v1.11.0)
+- github.com/cyphar/filepath-securejoin: [v0.3.4 → v0.3.5](https://github.com/cyphar/filepath-securejoin/compare/v0.3.4...v0.3.5)
+- github.com/golang/groupcache: [41bb18b → 2c02b82](https://github.com/golang/groupcache/compare/41bb18b...2c02b82)
+- github.com/google/cel-go: [v0.21.0 → v0.22.1](https://github.com/google/cel-go/compare/v0.21.0...v0.22.1)
+- github.com/google/gnostic-models: [v0.6.8 → v0.6.9](https://github.com/google/gnostic-models/compare/v0.6.8...v0.6.9)
+- github.com/google/pprof: [d1b30fe → 40e02aa](https://github.com/google/pprof/compare/d1b30fe...40e02aa)
+- github.com/grpc-ecosystem/grpc-gateway/v2: [v2.23.0 → v2.24.0](https://github.com/grpc-ecosystem/grpc-gateway/compare/v2.23.0...v2.24.0)
+- github.com/onsi/ginkgo/v2: [v2.21.0 → v2.22.0](https://github.com/onsi/ginkgo/compare/v2.21.0...v2.22.0)
+- github.com/onsi/gomega: [v1.35.1 → v1.36.1](https://github.com/onsi/gomega/compare/v1.35.1...v1.36.1)
+- github.com/opencontainers/runc: [v1.2.1 → v1.2.3](https://github.com/opencontainers/runc/compare/v1.2.1...v1.2.3)
+- github.com/prometheus/common: [v0.60.1 → v0.61.0](https://github.com/prometheus/common/compare/v0.60.1...v0.61.0)
+- github.com/stretchr/testify: [v1.9.0 → v1.10.0](https://github.com/stretchr/testify/compare/v1.9.0...v1.10.0)
+- go.etcd.io/etcd/api/v3: v3.5.16 → v3.5.17
+- go.etcd.io/etcd/client/pkg/v3: v3.5.16 → v3.5.17
+- go.etcd.io/etcd/client/v3: v3.5.16 → v3.5.17
+- go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp: v0.56.0 → v0.57.0
+- go.opentelemetry.io/proto/otlp: v1.3.1 → v1.4.0
+- golang.org/x/crypto: v0.28.0 → v0.30.0
+- golang.org/x/exp: 701f63a → 1829a12
+- golang.org/x/mod: v0.21.0 → v0.22.0
+- golang.org/x/net: v0.30.0 → v0.32.0
+- golang.org/x/oauth2: v0.23.0 → v0.24.0
+- golang.org/x/sync: v0.9.0 → v0.10.0
+- golang.org/x/sys: v0.27.0 → v0.28.0
+- golang.org/x/term: v0.25.0 → v0.27.0
+- golang.org/x/text: v0.20.0 → v0.21.0
+- golang.org/x/time: v0.7.0 → v0.8.0
+- golang.org/x/tools: v0.26.0 → v0.28.0
+- google.golang.org/genproto/googleapis/api: dd2ea8e → e6fa225
+- google.golang.org/genproto/googleapis/rpc: dd2ea8e → e6fa225
+- google.golang.org/grpc: v1.68.0 → v1.68.1
+- google.golang.org/protobuf: v1.35.1 → v1.35.2
+- k8s.io/api: v0.31.2 → v0.31.4
+- k8s.io/apiextensions-apiserver: v0.31.2 → v0.31.4
+- k8s.io/apimachinery: v0.31.2 → v0.31.4
+- k8s.io/apiserver: v0.31.2 → v0.31.4
+- k8s.io/cli-runtime: v0.31.2 → v0.31.4
+- k8s.io/client-go: v0.31.2 → v0.31.4
+- k8s.io/cloud-provider: v0.31.2 → v0.31.4
+- k8s.io/cluster-bootstrap: v0.31.2 → v0.31.4
+- k8s.io/code-generator: v0.31.2 → v0.31.4
+- k8s.io/component-base: v0.31.2 → v0.31.4
+- k8s.io/component-helpers: v0.31.2 → v0.31.4
+- k8s.io/controller-manager: v0.31.2 → v0.31.4
+- k8s.io/cri-api: v0.31.2 → v0.31.4
+- k8s.io/cri-client: v0.31.2 → v0.31.4
+- k8s.io/csi-translation-lib: v0.31.2 → v0.31.4
+- k8s.io/dynamic-resource-allocation: v0.31.2 → v0.31.4
+- k8s.io/endpointslice: v0.31.2 → v0.31.4
+- k8s.io/kms: v0.31.2 → v0.31.4
+- k8s.io/kube-aggregator: v0.31.2 → v0.31.4
+- k8s.io/kube-controller-manager: v0.31.2 → v0.31.4
+- k8s.io/kube-openapi: 67ed584 → 9959940
+- k8s.io/kube-proxy: v0.31.2 → v0.31.4
+- k8s.io/kube-scheduler: v0.31.2 → v0.31.4
+- k8s.io/kubectl: v0.31.2 → v0.31.4
+- k8s.io/kubelet: v0.31.2 → v0.31.4
+- k8s.io/kubernetes: v1.31.2 → v1.31.4
+- k8s.io/metrics: v0.31.2 → v0.31.4
+- k8s.io/mount-utils: v0.31.2 → v0.31.4
+- k8s.io/pod-security-admission: v0.31.2 → v0.31.4
+- k8s.io/sample-apiserver: v0.31.2 → v0.31.4
+- k8s.io/utils: 6fe5fd8 → 24370be
+- sigs.k8s.io/apiserver-network-proxy/konnectivity-client: v0.31.0 → v0.31.1
+- sigs.k8s.io/structured-merge-diff/v4: v4.4.1 → v4.4.3
+
+### Removed
+_Nothing has changed._
+
+# v1.37.0
+### Urgent Upgrade Notes
+*(No, really, you MUST read this before you upgrade)*
+
+#### [ACTION REQUIRED] Update to the EBS CSI Driver IAM Policy
+Due to an upcoming change in handling of IAM polices for the CreateVolume API when creating a volume from an EBS snapshot, a change to your EBS CSI Driver policy may be needed. For more information and remediation steps, see [GitHub issue #2190](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/2190). This change affects all versions of the EBS CSI Driver and action may be required even on clusters where the driver is not upgraded.
+
+### Notable Changes
+* Export EBS detailed performance statistics as Prometheus metrics for CSI-managed volumes ([#2216](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2216), [@torredil](https://github.com/torredil))
+
+### Bug Fixes
+* Update example-iam-policy.json for non 'aws' partitions ([#2193](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2193), [@willswire](https://github.com/willswire))
+
+### Improvements
+* Add Dependabot for Go module & GitHub Action dependencies ([#2179](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2179), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Add middleware to log server errors ([#2196](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2196), [@ConnorJC3](https://github.com/ConnorJC3))
+* Enable golang-ci linters ([#2204](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2204), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Enable VAC tests ([#2220](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2220), [@ElijahQuinones](https://github.com/ElijahQuinones))
+* Upgrade dependencies ([#2223](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2223), [@torredil](https://github.com/torredil))
+
+# v1.36.0
+### Urgent Upgrade Notes
+*(No, really, you MUST read this before you upgrade)*
+
+#### [ACTION REQUIRED] Update to the EBS CSI Driver IAM Policy
+Due to an upcoming change in handling of IAM polices for the CreateVolume API when creating a volume from an EBS snapshot, a change to your EBS CSI Driver policy may be needed. For more information and remediation steps, see [GitHub issue #2190](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/2190). This change affects all versions of the EBS CSI Driver and action may be required even on clusters where the driver is not upgraded.
+
+### Bug Fixes
+* Prevent `VolumeInUse` error when volume is still attaching ([#2183](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2183), [@ConnorJC3](https://github.com/ConnorJC3))
+* Add v1 Karpenter disrupted taint to pre-stop hook ([#2166](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2166), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+### Improvements
+* Update example policy for IAM change ([#2163](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2163), [@ConnorJC3](https://github.com/ConnorJC3))
+* Add EnableFSRs to example policy ([#2168](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2168), [@ConnorJC3](https://github.com/ConnorJC3))
+* Add m8g, c8g, x8g, g6e, and p5e attachment limits ([#2181](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2181), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Update FAQ to include section on Volume Attachment Capacity Issues ([#2169](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2169), [@torredil](https://github.com/torredil))
+* Use protobuf content type instead of json for k8s client ([#2138](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2138), [@bhavi-koduru](https://github.com/bhavi-koduru))
+* Update dependencies ahead of v1.36 ([#2182](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2182), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Migrate to kubekins-e2e-v2 ([#2177](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2177), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+# v1.35.0
+### Notable Changes
+* Add legacy-xfs driver option for clusters that mount XFS volumes to nodes with Linux kernel <= 5.4. Warning: This is a temporary workaround for customers unable to immediately upgrade their nodes. It will be removed in a future release. See [the options documentation](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/release-1.35/docs/options.md) for more details.([#2121](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2121),[@AndrewSirenko](https://github.com/AndrewSirenko))
+* Add local snapshots on outposts ([#2130](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2130), [@ElijahQuinones](https://github.com/ElijahQuinones))
+
+### Improvements
+* Bump dependencies for driver release v1.35.0 ([#2142](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2142), [@ElijahQuinones](https://github.com/ElijahQuinones))
+* Add support for outpost nodegroups to make cluster/create ([#2135](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2135), [@ConnorJC3](https://github.com/ConnorJC3))
+* Update faq.md with Karpenter best practices ([#2131](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2131),[@AndrewSirenko](https://github.com/AndrewSirenko))
+
+# v1.34.0
+### Notable Changes
+* Consider accelerators when calculating node attachment limit ([#2115](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2115), [@ElijahQuinones](https://github.com/ElijahQuinones))
+* Consider GPUs when calculating node attachment limit ([#2108](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2108), [@ElijahQuinones](https://github.com/ElijahQuinones))
+
+### Bug Fixes
+* Ensure ModifyVolume returns InvalidArgument error code if VAC contains invalid parameter ([#2103](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2103), [@mdzraf](https://github.com/mdzraf))
+
+### Improvements
+* Document metadata requirement and available sources ([#2117](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2117), [@ConnorJC3](https://github.com/ConnorJC3))
+* Upgrade dependencies ([#2123](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2123), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+# v1.33.0
+### Urgent Upgrade Notes
+*(No, really, you MUST read this before you upgrade)*
+
+* The AZ topology key `CreateVolume` returns has changed from `topology.ebs.csi.aws.com/zone` to `topology.kubernetes.io/zone`. Volumes created on `v1.33.0` or any future version will be incompatible with versions before `v1.28.0`. No other customer-facing impact is expected unless you directly depend on the topology label. For more information and the reasoning behind this change, see [issue #729](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/729#issuecomment-1942026577).
+
+### Notable Changes
+* Migrate CreateVolume response topology to standard label topology.kubernetes.io/zone ([#2086](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2086), [@ConnorJC3](https://github.com/ConnorJC3))
+* Add ability to modify EBS volume tags via VolumeAttributesClass ([#2082](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2082), [@mdzraf](https://github.com/mdzraf))
+* Add --kubeconfig flag for out-of-cluster auth ([#2081](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2081), [@cartermckinnon](https://github.com/cartermckinnon))
+
+### Bug Fixes
+* Bump GCR sidecars that reference broken tags ([#2091](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2091), [@ConnorJC3](https://github.com/ConnorJC3))
+* Bump go version to fix govulncheck failure ([#2080](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2080), [@ConnorJC3](https://github.com/ConnorJC3))
+* Use new client token when CreateVolume returns IdempotentParameterMismatch ([#2075](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2075), [@ConnorJC3](https://github.com/ConnorJC3))
+
+### Improvements
+* Change coalescer InputType from comparable to any ([#2083](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2083), [@ConnorJC3](https://github.com/ConnorJC3))
+* Fix function name in comment #2088 ([#2088](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2088), [@augustkang](https://github.com/augustkang))
+* Developer Experience Improvements ([#2079](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2079), [@ConnorJC3](https://github.com/ConnorJC3))
+* Bump dependencies for driver release v1.33.0 ([#2094](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2094), [@ElijahQuinones](https://github.com/ElijahQuinones))
+
+# v1.32.0
+### Announcements
+* The next minor version (`v1.33.0`) of the EBS CSI Driver will migrate the AZ topology label `CreateVolume` returns from `topology.ebs.csi.aws.com/zone` to `topology.kubernetes.io/zone`. Volumes created on this or any future version will be incompatible with EBS CSI Driver versions before `v1.28.0`, preventing a downgrade of more than 5 releases in the past. No other customer-facing impact is expected unless you directly depend on the topology label. For more information and the reasoning behind this change, see [issue #729](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/729#issuecomment-1942026577).
+
+### Bug Fixes
+* Fix off-by-one error in ENI calculation when using IMDS metadata ([#2065](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2065), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+### Improvements
+* Greatly clarify misleading metadata logging ([#2049](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2049), [@ConnorJC3](https://github.com/ConnorJC3))
+* Add missing Kubernetes license headers ([#2023](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2023), [@torredil](https://github.com/torredil))
+* Bump dependencies for release v1.32.0 ([#2069](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2069), [@ConnorJC3](https://github.com/ConnorJC3))
+
+# v1.31.0
+### Notable Changes
+* Add Alpha Support for Windows HostProcess Containers ([#2011](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2011), [@torredil](https://github.com/torredil))
+* Decrease median dynamic provisioning time by 1.5 seconds ([#2021](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2021), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+### Bug Fixes
+* Sanitize CSI RPC request logs ([#2037](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2037), [@torredil](https://github.com/torredil))
+
+### Improvements
+* Inject volumeWaitParameters dependency ([#2022](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2022), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Implement separate coalescer package and unit tests ([#2024](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2024), [@ConnorJC3](https://github.com/ConnorJC3))
+* Replace coalescer implementation with new coalescer package ([#2025](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2025), [@ConnorJC3](https://github.com/ConnorJC3))
+* Add make cluster/image command; Build image and cluster in parallel for CI ([#2028](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2028), [@ConnorJC3](https://github.com/ConnorJC3))
+* Tune batched EC2 Describe* maxDelay ([#2029](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2029), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+
+# v1.30.0
+### Notable Changes
+* Add retry manager to reduce RateLimitExceeded errors ([#2010](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2010), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Add options to run metrics endpoint over HTTPS ([#2014](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2014), [@ConnorJC3](https://github.com/ConnorJC3))
+
+### Bug Fixes
+* Remove DeleteDisk call in CreateDisk path ([#2009](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2009), [@ConnorJC3](https://github.com/ConnorJC3))
+* Consolidate request handling in RecordRequestsMiddleware ([#2013](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2013), [@torredil](https://github.com/torredil))
+* Run taint removal only if Kubernetes API is available ([#2015](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2015), [@torredil](https://github.com/torredil))
+
+### Improvements
+* Migrate to AWS SDKv2 ([#1963](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1963), [@torredil](https://github.com/torredil))
+* Batch EC2 DescribeVolumesModifications API calls ([#1965](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1965), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Improve configuration management; Improve the relationship between driver, controller, & cloud ([#1995](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1995), [@torredil](https://github.com/torredil))
+* Fix CVE G0-2024-2687 by bumping go and /x/net dependencies ([#1996](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1996), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Fix relationship between node service and mounter interface ([#1997](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1997), [@torredil](https://github.com/torredil))
+* Fix DeleteSnapshot error message ([#2000](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2000), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Add explicit AttachVolume call in WaitForAttachmentState ([#2005](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2005), [@torredil](https://github.com/torredil))
+* Handle deleted Node case in hook; Add support for CAS taint ([#2007](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2007), [@ConnorJC3](https://github.com/ConnorJC3))
+
+# v1.29.1
+### Bug Fixes
+* Correctly forward os.version for Windows images in multi-arch manifests ([#1985](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1985), [@ConnorJC3](https://github.com/ConnorJC3))
+
+# v1.29.0
+### Notable Changes
+* Implement KEP3751 ("ControllerModifyVolume") ([#1941](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1941), [@ConnorJC3](https://github.com/ConnorJC3))
+* Batch EC2 DescribeSnapshots calls ([#1958](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1958), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Batch EC2 DescribeInstances calls ([#1947](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1947), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Validate Karpenter Disruption taints as part of preStop node evaluation ([#1969](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1969), [@alexandermarston](https://github.com/alexandermarston))
+* Add OS topology key to node segments map ([#1950](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1950), [@torredil](https://github.com/torredil))
+
+### Bug Fixes
+* Add missing instances to instance store volumes table ([#1966](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1966), [@ConnorJC3](https://github.com/ConnorJC3))
+* Add `c6id` and `r6id` adjusted limits to `volume_limits.go` ([#1961](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1961), [@talnevo](https://github.com/talnevo))
+* Ensure CSINode allocatable count is set on node before removing startup taint ([#1949](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1949), [@torredil](https://github.com/torredil))
+
+### Improvements
+* Upgrade golangci-lint ([#1971](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1971), [@torredil](https://github.com/torredil))
+* Return ErrInvalidArgument in cloud upon EC2 ModifyVolume ([#1960](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1960), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Address CVE GO-2024-2611 ([#1959](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1959), [@torredil](https://github.com/torredil))
+* Upgrade to go v1.22 ([#1948](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1948), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+# v1.28.0
+### Notable Changes
+* Add ability to override heuristic-determined reserved attachments via  `--reserved-volume-attachments` CLI option ([#1919](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1919), [@jsafrane](https://github.com/jsafrane))
+    * In its default behavior, the EBS CSI Driver will attempt to guess the number of reserved volume slots via IMDS metadata (when it is available). Specifying the `--reserved-volume-attachments` CLI option overrides this heuristic value with a user-supplied value.
+    * It is strongly encouraged for users that need to reserve a well-known number of volume slots for non-CSI volumes (such as mounting an extra volume for `/var/lib/docker` data) use this new CLI option to avoid incorrect or incosistent behavior from the heuristic.
+* Report zone via well-known topology key in NodeGetInfo ([#1931](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1931), [@ConnorJC3](https://github.com/ConnorJC3))
+    * A future release of the EBS CSI Driver will migrate the topology key for created volumes from `topology.ebs.csi.aws.com/zone` to the well-known and standard `topology.kubernetes.io/zone`.
+    * After this future migration, downgrades of the EBS CSI Driver to versions prior to `v1.28.0` will become impossible in some environments (particularly, environments not running the [AWS CCM](https://github.com/kubernetes/cloud-provider-aws)).
+
+### Bug Fixes
+* Fix three tooling papercuts ([#1933](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1933), [@ConnorJC3](https://github.com/ConnorJC3))
+
+### Improvements
+* Add scalability FAQ entry ([#1894](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1894), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Add 6 minute attachment delay FAQ entry ([#1927](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1927), [@torredil](https://github.com/torredil))
+* Add `--modify-volume-request-handler-timeout` CLI option ([#1915](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1915), [@andrewcharlton](https://github.com/andrewcharlton))
+* Add `Makefile` target for code coverage report ([#1932](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1932), [@torredil](https://github.com/torredil))
+* Bump dependencies for release; Add m7i-flex instance type to dedicated limits list ([#1936](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1936), [@ConnorJC3](https://github.com/ConnorJC3))
+
+# v1.27.0
+### Notable Changes
+* Enable use of driver on AMIs with instance store mounts ([#1889](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1889), [@ConnorJC3](https://github.com/ConnorJC3))
+* Remove premature CreateVolume error if requested IOPS is below minimum ([#1883](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1883), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+### Bug Fixes
+* Fix taint removal retry for non-swallowed errors ([#1898](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1898), [@ConnorJC3](https://github.com/ConnorJC3))
+
+### Improvements
+* Use lsblk to safeguard against outdated symlinks ([#1878](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1878), [@ConnorJC3](https://github.com/ConnorJC3))
+* Bump go/sidecar dependencies ([#1900](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1900), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Pre-stop Lifecycle Hook enhancements ([#1895](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1895), [@torredil](https://github.com/torredil))
+
+# v1.26.1
+### Bug Fixes
+* Fix [csi sidecar container restarts after 30 minutes of idleness](https://github.com/kubernetes-csi/external-provisioner/issues/1099) by upgrading to latest versions of affected sidecars ([#1886](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1886), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Fix regression for those upgrading from pre-v1.12.0 who have misconfigured GP3 storage classes with IOPS below 3000 ([#1879](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1879), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+### Improvements
+* Bump golang.org/x/crypto to v0.17.0 to fix [CVE-2023-48795](https://github.com/advisories/GHSA-45x7-px36-x8w8) ([$1877](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1877), [@dobsonj](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/commits?author=dobsonj))
+* Upgrade dependencies ([#1886](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1886), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+# v1.26.0
+### Announcements
+* [The EBS CSI Driver Helm chart will stop supporting `--reuse-values` in a future release](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/1864)
+
+### Notable Changes
+* Add retry and background run to node taint removal ([#1861](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1861), [@ConnorJC3](https://github.com/ConnorJC3))
+* Add U7i attachment limits ([#1867](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1867), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+### Bug Fixes
+* Clamp minimum reported attachment limit to 1 to prevent undefined limit (This will prevent K8s from unrestricted scheduling of stateful workloads) ([#1859](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1859), [@torredil](https://github.com/torredil))
+* Instances listed under `maxVolumeLimits` not taking into account ENIs/Instance storage ([#1860](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1860), [@torredil](https://github.com/torredil))
+
+### Improvements
+* Upgrade dependencies for aws-ebs-csi-driver v1.26.0 ([#1867](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1867), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Bump otelhttp to fix CVE-2023-45142 ([#1858](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1858), [@jsafrane](https://github.com/jsafrane))
+
+# v1.25.0
+### Notable Changes
+* Feature: Multi-Attach for io2 block devices ([#1799](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1799), [@torredil](https://github.com/torredil))
+* Mitigate EC2 rate-limit issues by batching DescribeVolume API requests ([#1819](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1819), [@torredil](https://github.com/torredil))
+
+### Bug Fixes
+* Fix Error Handling for Volumes in Optimizing State ([#1833](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1833), [@torredil](https://github.com/torredil))
+
+### Improvements
+* Update default sidecar timeout values in chart to improve driver performance ([#1824](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1824), [@torredil](https://github.com/torredil))
+* Increase default QPS and worker threads of sidecars in chart to improve driver performance ([#1834](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1834), [@ConnorJC3](https://github.com/ConnorJC3))
+* Add volume limits for r7i ([#1832](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1832), [@torredil](https://github.com/torredil))
+* Upgrade driver & sidecar dependencies for v1.25.0 ([#1835](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1835), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Bump go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp to v0.45.0 ([#1827](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1827), [@jsafrane](https://github.com/jsafrane))
+* Update modify-volume.md ([#1816](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1816), [@sebastianlzy](https://github.com/sebastianlzy))
+
+# v1.24.1
+### Bug Fixes
+* Add compatibility workaround for A1 instance family ([#1811](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1811), [@ConnorJC3](https://github.com/ConnorJC3))
+
+### Improvements
+* Upgrade dependencies (and resolve CVEs found in [#1800](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/1800)) ([#1809](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1809), [@ConnorJC3](https://github.com/ConnorJC3))
+
+# v1.24.0
+### Notable Changes
+* Support clustered allocation with ext4 filesystems. This allows developers to enable [torn write prevention](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/storage-twp.html) on their dynamically provisioned volumes to improve the performance of I/O-intensive relational database workloads. ([#1706](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1706), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Add volume limits for m7a, c7a, c7i, r7a, r7iz instance families ([#1742](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1742) & [#1776](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1776), [@torredil](https://github.com/torredil))
+
+### Bug Fixes
+* Fix DeleteDisk error handling in volume creation failure ([#1782](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1782), [@maaoBit](https://github.com/maaoBit))
+
+### Improvements
+* Document topologies in parameters.md ([#1764](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1764), [@ConnorJC3](https://github.com/ConnorJC3))
+* Upgrade dependencies ([#1781](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1781), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Metric Instrumentation Framework ([#1767](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1767), [@torredil](https://github.com/torredil))
+
+# v1.23.2
+### Bug Fixes
+* Add compatibility workaround for A1 instance family ([#1811](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1811), [@ConnorJC3](https://github.com/ConnorJC3))
+
+### Improvements
+* Upgrade dependencies (and resolve CVEs found in [#1800](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/1800)) ([#1809](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1809), [@ConnorJC3](https://github.com/ConnorJC3))
+
+# v1.23.1
+### Bug Fixes
+* Upgrade volume-modifier-for-k8s sidecar to 0.1.3 for Leader election conflict with csi-resizer bug fix ([#14](https://github.com/awslabs/volume-modifier-for-k8s/pull/14), [@torredil](https://github.com/torredil))
+
+# v1.23.0
+### Urgent Upgrade Notes
+*(No, really, you MUST read this before you upgrade)*
+
+The EBS CSI Driver's Linux base image was upgraded from Amazon Linux 2 (AL2) to Amazon Linux 2023 (AL2023) in this release. This change will continue to improve the performance and security of the EBS CSI Driver via updates available only on AL2023.
+
+As part of this change, e2fsprogs will be upgraded from `1.42.9` to `1.46.5` and xfsprogs will be upgraded from `5.0.0` to `5.18.0`. New volumes created on versions of the EBS CSI Driver with an AL2023 base image may fail to mount or resize on versions of the EBS CSI Driver with an AL2 base image. For this reason, downgrading the EBS CSI Driver across base images will not be supported and is strongly discouraged. Please see [[Announcement] Base image upgrade to AL2023 · Issue #1719 · kubernetes-sigs/aws-ebs-csi-driver](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/1719) to provide any questions or feedback.
+
+### Notable Changes
+* PreStop lifecycle hook to alleviate 6+ minute force-detach delay ([#1736](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1736), [@torredil](https://github.com/torredil))
+* Add option for opentelemetry tracing of gRPC calls ([#1714](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1714), [@Fricounet](https://github.com/Fricounet))
+* Upgrade Linux base image to AL2023 ([#1731](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1731), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+### Bug Fixes
+* Do not call ModifyVolume if the volume is already in the desired state ([#1741](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1741), [@ConnorJC3](https://github.com/ConnorJC3))
+
+### Improvements
+* Dependancy upgrades ([#1743](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1743), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+# v1.22.1
+### Bug Fixes
+* Cherry-pick from v1.23.1: Do not call ModifyVolume if the volume is already in the desired state ([#1741](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1741), [@ConnorJC3](https://github.com/ConnorJC3))
+* Upgrade volume-modifier-for-k8s sidecar to 0.1.3 for Leader election conflict with csi-resizer bug fix ([#14](https://github.com/awslabs/volume-modifier-for-k8s/pull/14), [@torredil](https://github.com/torredil))
+
+# 1.22.0
+### Urgent Upgrade Notes
+*(No, really, you MUST read this before you upgrade)*
+
+In an upcoming version, the EBS CSI Driver will upgrade the base image from AL2 to AL2023. For more information and to provide feedback about this change, see [issue #1719](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/1719)
+
+### Notable Changes
+* Request coalescing for resizing and modifying volume ([#1676](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1676), [@hanyuel](https://github.com/hanyuel))
+* Support specifying inode size for filesystem format ([#1661](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1661), [@fgksgf](https://github.com/fgksgf))
+
+### Bug Fixes
+* Correct volume limits for i4i instance types ([#1699](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1699), [@talnevo](https://github.com/talnevo))
+* Use SSM to get latest stable AMI for EC2 nodes ([#1689](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1689), [@torredil](https://github.com/torredil))
+* Add `i4i.large` to volume limits config ([#1715](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1715), [@torredil](https://github.com/torredil))
+
+### Improvements
+* Add volume limits for m7i family ([#1710](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1710), [@ConnorJC3](https://github.com/ConnorJC3))
+
+### Misc
+* Bump golang.org/x/net/html to fix CVE-2023-3978 ([#1711](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1711), [@jsafrane](https://github.com/jsafrane))
+
 # v1.21.0
 ### Bug Fixes
 * Enable setting throughput without specifying volume type when modifying volumes ([#1667](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1667), [@Indresh2410](https://github.com/Indresh2410))

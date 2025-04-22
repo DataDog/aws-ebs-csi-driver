@@ -1,5 +1,243 @@
 # Helm chart
 
+## v2.42.0
+
+### Feature
+
+- Set internal traffic policy to local for node metric service ([#2432](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2432), [@ElijahQuinones](https://github.com/ElijahQuinones))
+
+## v2.41.0
+
+### Feature
+
+- Add `enabled` flag to schema for use in sub-charting ([#2361](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2361), [@ConnorJC3](https://github.com/ConnorJC3))
+- Add Prometheus Annotations to the Node Service ([#2363](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2363), [@mdzraf](https://github.com/mdzraf))
+
+### Bug or regression
+
+- Prevent nil pointer deref in Helm chart when `node.enableWindows` and `node.otelTracing` are both set ([#2357](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2357), [@ConnorJC3](https://github.com/ConnorJC3))
+
+## v2.40.3
+
+### Feature
+
+- Upgrade csi-attacher to v4.8.1, csi-snapshotter to v8.2.1, csi-resizer to v1.13.2
+
+### Bug or regression
+
+- Fix incorrect schema entry for controller.podDisruptionBudget.unhealthyPodEvictionPolicy ([#2389](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2389),[@jamesalford](https://github.com/jamesalford))
+
+## v2.40.2
+
+### Bug or Regression
+
+- Add enabled flag to schema for sub-charting ([#2359](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2359), [@ConnorJC3](https://github.com/ConnorJC3))
+
+## v2.40.1
+
+### Bug or Regression
+
+- Prevent null deref when enableWindows and otelTracing enabled on node ([#2357](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2357), [@ConnorJC3](https://github.com/ConnorJC3)) 
+- Fix incorrect properties validation in Helm schema ([#2356](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2356), [@ConnorJC3](https://github.com/ConnorJC3))
+
+## v2.40.0
+
+#### Default for enable windows changed
+
+The default value for enableWindows has been changed from false to true. This change makes it so the node damemonset will be scheduled on windows nodes by default. If you wish to not have the node daemonset scheduled on your windows nodes you will need to change enableWindows to false.
+
+### Feature
+
+- Add values.schema.json to validate changes in values.yaml. ([#2286](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2286), [@ElijahQuinones](https://github.com/ElijahQuinones))
+
+### Bug or Regression
+
+- Fix helm regression with values.schema.yaml. ([#2322](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2322), [@ElijahQuinones](https://github.com/ElijahQuinones))
+- `global` has been added to the values schema, allowing aws-ebs-csi-driver to be used in a Helm sub chart ([#2321](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2321), [@kejne](https://github.com/kejne))
+- Reconcile some differences between helm chart and values.schema.json ([#2335](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2335), [@ElijahQuinones](https://github.com/ElijahQuinones))
+- Fix helm regression with a1CompatibilityDaemonSet=true ([#2316](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2316), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+## v2.39.3
+
+### Urgent Upgrade Notes
+
+Please upgrade from v2.39.2 directly to v2.39.3 to avoid upgrade failures if you are using this chart as a subchart.
+
+### Bug or Regression
+- Fix sub-charting by removing values schema ([#2322](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2322), [@ElijahQuinones]((https://github.com/ElijahQuinones)
+
+## v2.39.2
+
+### Urgent Upgrade Notes
+
+Please upgrade from v2.38.1 directly to v2.39.2 to avoid upgrade failures if you are relying on `a1CompatibilityDaemonSet`. 
+
+### Bug or Regression
+- Fix helm regression when `a1CompatibilityDaemonSet=true` ([#2316](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2316), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+## v2.39.1
+
+### Bug or Regression
+- Fix `node.selinux` to properly set SELinux-specific mounts as ReadOnly ([#2311](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2311), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+## v2.39.0
+
+### Feature
+
+- Add Helm parameter `node.selinux` to enable SELinux-specific mounts on the node DaemonSet ([#2253](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2253), [@ConnorJC3](https://github.com/ConnorJC3))
+- Add Helm FIPS parameter ([#2244](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2244), [@ConnorJC3](https://github.com/ConnorJC3))
+
+## v2.38.1
+
+### Feature
+
+- Render templated controller service account parameters ([#2243](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2243), [@ElijahQuinones](https://github.com/ElijahQuinones))
+
+### Bug or Regression
+
+- Fix rendering failrue when `node.enableMetrics` is set to `true` ([#2250](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2250), [@mindw](https://github.com/mindw))
+- Remove duplicate 'enableMetrics' key ([#2256](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2256), [@sule26](https://github.com/sule26))
+
+## v2.37.0
+* Bump driver version to `v1.37.0`
+* Add init containers to node daemonset ([#2215](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2215), [@clbx](https://github.com/clbx))
+* Fix fetching test package version for kubetest in helm-tester ([#2203](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2203), [@torredil](https://github.com/torredil))
+
+## v2.36.0
+* Bump driver version to `v1.36.0`
+* Add recommended autoscalar Tolerations to driver DaemonSet ([#2165](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2165), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Add support for unhealthyPodEvictionPolicy on PodDisruptionBudget ([#2159](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2159), [@peterabarr](https://github.com/peterabarr))
+
+## v2.35.1
+* Fix an issue causing the `csi-attacher` container to get stuck in `CrashLoopBackoff` on clusters with VAC enabled. Users with a VAC-enabled cluster are strongly encouraged to skip `v2.35.0` and/or upgrade directly to `v2.35.1` or later.
+
+## v2.35.0
+* Bump driver version to `v1.35.0`
+* Add reservedVolumeAttachments to windows nodes ([#2134](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2134),[@AndrewSirenko](https://github.com/AndrewSirenko))
+* Add legacy-xfs driver option for clusters that mount XFS volumes to nodes with Linux kernel <= 5.4. Warning: This is a temporary workaround for customers unable to immediately upgrade their nodes. It will be removed in a future release. See [the options documentation](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/blob/release-1.35/docs/options.md) for more details.([#2121](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2121),[@AndrewSirenko](https://github.com/AndrewSirenko))
+* Add back "Auto-enable VAC on clusters with beta API version" ([#2141](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2141), [@ConnorJC3](https://github.com/ConnorJC3))
+
+## v2.34.0
+* Bump driver version to `v1.34.0`
+* Add toggle for PodDisruptionBudget in chart ([#2109](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2109), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Add nodeComponentOnly parameter to helm chart ([#2106](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2106), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* fix: sidecars.snapshotter.logLevel not being respect ([#2102](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2102), [@zyue110026](https://github.com/zyue110026))
+
+## v2.33.0
+* Bump driver version to `v1.33.0`
+* Bump CSI sidecar container versions
+* Add fix for enableLinux node parameter ([#2078](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2078), [@ElijahQuinones](https://github.com/ElijahQuinones))
+* Fix dnsConfig indentation in controller template file ([#2084](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2084), [@cHiv0rz](https://github.com/cHiv0rz))
+
+## v2.32.0
+* Bump driver version to `v1.32.0`
+* Bump CSI sidecar container versions
+* Add `patch` permission to `PV` to `external-provisioner` role (required by v5 and later)
+* Add terminationGracePeriodSeconds as a helm parameter ([#2060](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2060), [@ElijahQuinones](https://github.com/ElijahQuinones))
+* Use release namespace in ClusterRoleBinding subject namespace ([#2059](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2059), [@etutuit](https://github.com/etutuit))
+* Add parameter to override node DaemonSet namespace ([#2052](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2052), [@RuStyC0der](https://github.com/RuStyC0der))
+* Set RuntimeDefault as default seccompProfile in securityContext ([#2061](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2061), [@torredil](https://github.com/torredil))
+* Increase default provisioner, resizer, snapshotter `retry-interval-max` ([#2057](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2057), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+## v2.31.0
+* Bump driver version to `v1.31.0`
+* Expose dnsConfig in Helm Chart for Custom DNS Configuration ([#2034](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2045), [@omerap12](https://github.com/omerap12))
+* Make scrape interval configurable ([#2035](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2035), [@omerap12](https://github.com/omerap12))
+* Add defaultStorageClass parameter ([#2039](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2039), [@torredil](https://github.com/torredil))
+* Upgrade sidecar containers ([#2041](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2041), [@torredil](https://github.com/torredil))
+
+## v2.30.0
+* Bump driver version to `v1.30.0`
+* Update voluemessnapshotcontents/status RBAC ([#1991](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1991), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Upgrade dependencies ([#2016](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/2016), [@torredil](https://github.com/torredil))
+
+## v2.29.1
+* Bump driver version to `v1.29.1`
+* Remove `--reuse-values` deprecation warning
+
+## v2.29.0
+### Urgent Upgrade Notes
+*(No, really, you MUST read this before you upgrade)*
+
+The EBS CSI Driver Helm chart no longer supports upgrading with `--reuse-values`. This chart will not test for `--reuse-values` compatibility and upgrading with `--reuse-values` will likely fail. Users of `--reuse-values` are strongly encouraged to migrate to `--reset-then-reuse-values`.
+
+For more information see [the deprecation announcement](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/1864).
+
+### Other Changes
+* Bump driver version to `v1.29.0` and sidecars to latest versions
+* Add helm-tester enabled flag ([#1954](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1954), [@nunodomingues-td](https://github.com/nunodomingues-td))
+
+## v2.28.1
+* Add `reservedVolumeAttachments` that overrides heuristic-determined reserved attachments via  `--reserved-volume-attachments` CLI option from [PR #1919](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1919) through Helm ([#1939](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1939), [@AndrewSirenko](https://github.com/AndrewSirenko)) 
+* Add `additionalArgs` parameter to node daemonSet ([#1939](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1939), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+## v2.28.0
+### Urgent Upgrade Notes
+*(No, really, you MUST read this before you upgrade)*
+
+This is the last minor version of the EBS CSI Driver Helm chart to support upgrading with `--reuse-values`. Future versions of the chart (starting with `v2.29.0`) will not test for `--reuse-values` compatibility and upgrading with `--reuse-values` will likely fail. Users of `--reuse-values` are strongly encouraged to migrate to `--reset-then-reuse-values`.
+
+For more information see [the deprecation announcement](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/1864).
+
+### Other Changes
+* Bump driver version to `v1.28.0` and sidecars to latest versions
+* Add labels to leases role used by EBS CSI controller ([#1914](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1914), [@cHiv0rz](https://github.com/cHiv0rz))
+* Enforce `linux` and `amd64` node affinity for helm tester pod ([#1922](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1922), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Add configuration for `DaemonSet` annotations ([#1923](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1923), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Incorporate KubeLinter recommended best practices for chart tester pod ([#1924](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1924), [@torredil](https://github.com/torredil))
+* Add configuration for chart tester pod image ([#1928](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1928), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+## v2.27.0
+* Bump driver version to `v1.27.0`
+* Add parameters for tuning revisionHistoryLimit and emptyDir volumes ([#1840](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1840), [@bodgit](https://github.com/bodgit))
+
+## v2.26.1
+* Bump driver version to `v1.26.1`
+* Bump sidecar container versions to fix [restart bug in external attacher, provisioner, resizer, snapshotter, and node-driver-registrar](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/issues/1875) ([#1886](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1886), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+## v2.26.0
+* Bump driver version to `v1.26.0`
+* Bump sidecar container versions ([#1867](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1867), [@AndrewSirenko](https://github.com/AndrewSirenko)) 
+* Add warning about --reuse-values deprecation to NOTES.txt ([#1865](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1865), [@ConnorJC3](https://github.com/ConnorJC3))
+
+## v2.25.0
+* Bump driver version to `v1.25.0`
+* Update default sidecar timeout values ([#1824](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1824), [@torredil](https://github.com/torredil))
+* Increase default QPS and worker threads of sidecars ([#1834](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1834), [@ConnorJC3](https://github.com/ConnorJC3))
+* Node-driver-registrar sidecar fixes ([#1815](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1815), [@jukie](https://github.com/jukie))
+* Suggest eks.amazonaws.com/role-arn in values.yaml if EKS IAM for SA is used ([#1804](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1804), [@tporeba](https://github.com/tporeba))
+
+## v2.24.1
+* Bump driver version to `v1.24.1`
+* Upgrade sidecar images
+
+## v2.24.0
+* Bump driver version to `v1.24.0`
+* Add additionalClusterRoleRules to sidecar chart templates. ([#1757](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1757), [@AndrewSirenko](https://github.com/AndrewSirenko))
+* Allow passing template value for clusterName ([#1753](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1753), [@monicastanciu](https://github.com/monicastanciu))
+* Make hostNetwork configurable for daemonset ([#1716](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1716), [@bseenu](https://github.com/bseenu))
+* Add labels to volumesnapshotclass ([#1754](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1754), [@fad3t](https://github.com/fad3t))
+* Update default API version for PodDisruptionBudget ([#1751](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1751), [@AndrewSirenko](https://github.com/AndrewSirenko))
+
+## v2.23.2
+* Bump driver version to `v1.23.2`
+* Upgrade sidecar images
+
+## v2.23.1
+* Bump driver version to `v1.23.1`
+
+## v2.23.0
+* Add `node.enableLinux` parameter ([#1732](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1732), [@monicastanciu](https://github.com/monicastanciu))
+* Additional Node DaemonSets bug fixes ([#1739](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1739), [@monicastanciu](https://github.com/monicastanciu))
+* Additional DaemonSets feature ([#1722](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1722), [@ConnorJC3](https://github.com/ConnorJC3))
+* Add doc of chart value additionalArgs ([#1697](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1697), [@zitudu](https://github.com/zitudu))
+
+## v2.22.1
+* Bump driver version to `v1.22.1`
+
+## v2.22.0
+* Default PodDisruptionBudget to policy/v1 ([#1707](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1707), [@iNoahNothing](https://github.com/iNoahNothing))
+
 ## v2.21.0
 * Bump driver version to `v1.21.0`
 * Enable additional volume mounts on node pods ([#1670](https://github.com/kubernetes-sigs/aws-ebs-csi-driver/pull/1670), [@AndrewSirenko](https://github.com/AndrewSirenko))

@@ -17,7 +17,8 @@ limitations under the License.
 package devicemanager
 
 import (
-	"fmt"
+	"errors"
+	"sync"
 )
 
 // ExistingNames is a map of assigned device names. Presence of a key with a device
@@ -34,7 +35,7 @@ type ExistingNames map[string]string
 // call), so all available device names are used eventually and it minimizes
 // device name reuse.
 type NameAllocator interface {
-	GetNext(existingNames ExistingNames) (name string, err error)
+	GetNext(existingNames ExistingNames, likelyBadNames *sync.Map) (name string, err error)
 }
 
 type nameAllocator struct{}
@@ -43,12 +44,31 @@ var _ NameAllocator = &nameAllocator{}
 
 // GetNext returns a free device name or error when there is no free device name
 // It does this by using a list of legal EBS device names from device_names.go
-func (d *nameAllocator) GetNext(existingNames ExistingNames) (string, error) {
+//
+// likelyBadNames is a map of names that have previously returned an "in use" error when attempting to mount to them
+// These names are unlikely to result in a successful mount, and may be permanently unavailable, so use them last.
+func (d *nameAllocator) GetNext(existingNames ExistingNames, likelyBadNames *sync.Map) (string, error) {
 	for _, name := range deviceNames {
-		if _, found := existingNames[name]; !found {
+		_, existing := existingNames[name]
+		_, likelyBad := likelyBadNames.Load(name)
+		if !existing && !likelyBad {
 			return name, nil
 		}
 	}
 
-	return "", fmt.Errorf("there are no names available")
+	finalResortName := ""
+	likelyBadNames.Range(func(name, _ interface{}) bool {
+		if name, ok := name.(string); ok {
+			if _, existing := existingNames[name]; !existing {
+				finalResortName = name
+				return false
+			}
+		}
+		return true
+	})
+	if finalResortName != "" {
+		return finalResortName, nil
+	}
+
+	return "", errors.New("there are no names available")
 }

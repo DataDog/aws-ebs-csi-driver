@@ -1,29 +1,56 @@
 # Volume Modification
 
-The EBS CSI Driver (starting from v1.19.0) supports volume modification through PVC annotations. This allows users to modify volume properties (e.g., volume type, IOPS, and throughput). 
+The EBS CSI Driver (starting from v1.19.0) supports volume modification through two methods:
+- Via the standardized CSI RPC `ControllerModifyVolume` (on Kubernetes, this is done via [`VolumeAttributesClass`](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/))
+- Volume annotations via [`volume-modifier-for-k8s`](https://github.com/awslabs/volume-modifier-for-k8s)
 
 ## Installation
-This feature is opt-in. 
 
-To install this feature through the Helm chart, users must set `controller.volumeModificationFeature.enabled` in `values.yaml` to `true`.
+### `ControllerModifyVolume` via `VolumeAttributesClass` (Recommended)
+
+`VolumeAttributesClass` support is controlled by the Kubernetes `VolumeAttributesClass` [feature gate](https://kubernetes.io/docs/reference/command-line-tools-reference/feature-gates/).
+
+To use this feature, it must be enabled in the following places:
+- `VolumeAttributesClass` feature gate on `kube-apiserver` (consult your Kubernetes distro's documentation)
+- `storage.k8s.io/v1alpha1` (Kubernetes 1.30 and before) or `storage.k8s.io/v1beta1` (Kubernetes 1.31 and later) enabled in `kube-apiserver` via [`runtime-config`](https://kubernetes.io/docs/tasks/administer-cluster/enable-disable-api/) (consult your Kubernetes distro's documentation)
+- `VolumeAttributesClass` feature gate on `kube-controller-manager` (consult your Kubernetes distro's documentation)
+- `VolumeAttributesClass` feature gate on `kube-scheduler` (consult your Kubernetes distro's documentation)
+- `VolumeAttributesClass` feature gate on `external-provisioner` sidecar
+- `VolumeAttributesClass` feature gate on `external-resizer` sidecar
+
+The EBS CSI Driver Helm chart will automatically enable the `VolumeAttributesClass` feature gate on the sidecars if `VolumeAttributesClass` object is detected with a beta API version (Kubernetes 1.31 and later). You (or your Kubernetes distro, on your behalf) are responsible for enabling the feature gate on the control plane components (`kube-apiserver` and `kube-controller-manager`).
+
+For more information, see the [Kubernetes documentation for Volume Attributes Classes](https://kubernetes.io/docs/concepts/storage/volume-attributes-classes/).
+
+### `volume-modifier-for-k8s`
+
+To enable this feature through the Helm chart, users must set `controller.volumeModificationFeature.enabled` in `values.yaml` to `true`.
 
 This will install an additional sidecar (`volumemodifier`) that watches the Kubernetes API server for changes to PVC annotations and triggers an RPC call against the CSI driver.
 
-## Usage
+## Parameters
 
-Users can specify the following PVC annotations:
+Users can specify the following modification parameters:
 
-- `ebs.csi.aws.com/volumeType`: to update the volume type
-- `ebs.csi.aws.com/iops`: to update the IOPS
-- `ebs.csi.aws.com/throughput`: to update the throughput
+- `type`: to update the volume type
+- `iops`: to update the IOPS
+- `throughput`: to update the throughput
+
+The EBS CSI Driver also supports modifying tags of existing volumes (only available for `VolumeAttributesClass`), see [the modification section in the tagging documentation](tagging.md#adding-modifying-and-deleting-tags-of-existing-volumes) for more information.
 
 ## Considerations
 
-- Keep in mind the [6 hour cooldown period](https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyVolume.html) for EBS ModifyVolume. Multiple ModifyVolume calls for the same volume within a 6 hour period will fail. 
-- It is not yet possible to update both the annotations and capacity of the PVC at the same time. This results in multiple RPC calls to the driver, and only one of them will succeed (due to the cooldown period). A future release of the driver will lift this restriction.
+- Keep in mind the [6-hour cooldown period](https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyVolume.html) for EBS ModifyVolume. Multiple ModifyVolume calls for the same volume within a 6-hour period will fail.
+  - Note: If your volume modification only creates/modifies AWS resource tags, EBS ModifyVolume will not be called and this 6-hour cooldown period does not apply.  
 - Ensure that the desired volume properties are permissible. The driver does minimum client side validation. 
 
 ## Example
+
+### `ControllerModifyVolume` via `VolumeAttributesClass`
+
+See the [EBS CSI example with manifests](../examples/kubernetes/modify-volume).
+
+### `volume-modifier-for-k8s`
 
 #### 1) Create a PVC.
 
@@ -39,7 +66,7 @@ spec:
   storageClassName: ebs-sc
   resources:
     requests:
-      storage: 100Gi
+      storage: 10Gi
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -83,7 +110,7 @@ Annotations:   pv.kubernetes.io/bind-completed: yes
                volume.kubernetes.io/selected-node: ip-192-168-32-79.ec2.internal
                volume.kubernetes.io/storage-provisioner: ebs.csi.aws.com
 Finalizers:    [kubernetes.io/pvc-protection]
-Capacity:      100Gi
+Capacity:      10Gi
 Access Modes:  RWO
 VolumeMode:    Filesystem
 Used By:       app
@@ -101,7 +128,7 @@ Events:
 ```
 $ pv=$(k get -o json pvc ebs-claim | jq -r '.spec | .volumeName')
 $ volumename=$(k get -o json pv $pv | jq -r '.spec | .csi | .volumeHandle')
-$ aws ec2 describe-volumes —volume-id $volumename | jq '.Volumes[] | "\(.VolumeType) \(.Iops) \(.Throughput)"'
+$ aws ec2 describe-volumes --volume-ids $volumename | jq '.Volumes[] | "\(.VolumeType) \(.Iops) \(.Throughput)"'
 "gp3 3000 125"
 ```
 
@@ -121,7 +148,7 @@ spec:
   storageClassName: ebs-sc
   resources:
     requests:
-      storage: 100Gi
+      storage: 10Gi
 ```
 
 #### 5) Verify the volume has been updated successfully.
@@ -143,7 +170,7 @@ Annotations:   ebs.csi.aws.com/iops: 4000
                volume.kubernetes.io/selected-node: ip-192-168-88-208.us-east-2.compute.internal
                volume.kubernetes.io/storage-provisioner: ebs.csi.aws.com
 Finalizers:    [kubernetes.io/pvc-protection]
-Capacity:      100Gi
+Capacity:      10Gi
 Access Modes:  RWO
 VolumeMode:    Filesystem
 Used By:       app
@@ -177,7 +204,7 @@ Claim:             default/ebs-claim
 Reclaim Policy:    Delete
 Access Modes:      RWO
 VolumeMode:        Filesystem
-Capacity:          100Gi
+Capacity:          10Gi
 Node Affinity:     
   Required Terms:  
     Term 0:        topology.ebs.csi.aws.com/zone in [us-east-2b]
@@ -196,7 +223,7 @@ Do **NOT** delete these annotations. These annotations are used by the sidecar t
 
 #### 6) (Optional) Validate the volume has been modified in EBS.
 ```
-$ aws ec2 describe-volumes --volume-id $volumename | jq '.Volumes[] | "\(.VolumeType) \(.Iops) \(.Throughput)"'
+$ aws ec2 describe-volumes --volume-ids $volumename | jq '.Volumes[] | "\(.VolumeType) \(.Iops) \(.Throughput)"'
 "io2 4000 null"
 ```
 

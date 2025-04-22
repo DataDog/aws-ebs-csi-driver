@@ -1,105 +1,96 @@
-/*
-Copyright 2020 The Kubernetes Authors.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// Copyright 2024 The Kubernetes Authors.
+//
+// Licensed under the Apache License, Version 2.0 (the 'License');
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an 'AS IS' BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package driver
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/golang/mock/gomock"
+	"github.com/kubernetes-sigs/aws-ebs-csi-driver/pkg/cloud"
+	"github.com/kubernetes-sigs/aws-ebs-csi-driver/pkg/cloud/metadata"
+	"github.com/kubernetes-sigs/aws-ebs-csi-driver/pkg/mounter"
+	"github.com/stretchr/testify/require"
 )
 
-func TestWithEndpoint(t *testing.T) {
-	value := "endpoint"
-	options := &DriverOptions{}
-	WithEndpoint(value)(options)
-	if options.endpoint != value {
-		t.Fatalf("expected endpoint option got set to %q but is set to %q", value, options.endpoint)
+func TestNewDriver(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	mockCloud := cloud.NewMockCloud(ctrl)
+	mockMetadataService := metadata.NewMockMetadataService(ctrl)
+	mockMounter := mounter.NewMockMounter(ctrl)
+	mockKubernetesClient := NewMockKubernetesClient(ctrl)
+	testCases := []struct {
+		name          string
+		o             *Options
+		expectError   bool
+		hasController bool
+		hasNode       bool
+	}{
+		{
+			name: "Valid driver controllerMode",
+			o: &Options{
+				Mode:                              ControllerMode,
+				ModifyVolumeRequestHandlerTimeout: 1,
+			},
+			expectError:   false,
+			hasController: true,
+			hasNode:       false,
+		},
+		{
+			name: "Valid driver nodeMode",
+			o: &Options{
+				Mode: NodeMode,
+			},
+			expectError:   false,
+			hasController: false,
+			hasNode:       true,
+		},
+		{
+			name: "Valid driver allMode",
+			o: &Options{
+				Mode:                              AllMode,
+				ModifyVolumeRequestHandlerTimeout: 1,
+			},
+			expectError:   false,
+			hasController: true,
+			hasNode:       true,
+		},
+		{
+			name: "Invalid driver options",
+			o: &Options{
+				Mode: "InvalidMode",
+			},
+			expectError:   true,
+			hasController: false,
+			hasNode:       false,
+		},
 	}
-}
-
-func TestWithExtraTags(t *testing.T) {
-	value := map[string]string{"foo": "bar"}
-	options := &DriverOptions{}
-	WithExtraTags(value)(options)
-	if !reflect.DeepEqual(options.extraTags, value) {
-		t.Fatalf("expected extraTags option got set to %+v but is set to %+v", value, options.extraTags)
-	}
-}
-
-func TestWithExtraVolumeTags(t *testing.T) {
-	value := map[string]string{"foo": "bar"}
-	options := &DriverOptions{}
-	WithExtraVolumeTags(value)(options)
-	if !reflect.DeepEqual(options.extraTags, value) {
-		t.Fatalf("expected extraTags option got set to %+v but is set to %+v", value, options.extraTags)
-	}
-}
-
-func TestWithExtraVolumeTagsNoOverwrite(t *testing.T) {
-	extraTagsValue := map[string]string{"foo": "bar"}
-	options := &DriverOptions{}
-	WithExtraTags(extraTagsValue)(options)
-	extraVolumeTagsValue := map[string]string{"baz": "qux"}
-	WithExtraVolumeTags(extraVolumeTagsValue)(options)
-	if !reflect.DeepEqual(options.extraTags, extraTagsValue) {
-		t.Fatalf("expected extraTags option got set to %+v but is set to %+v", extraTagsValue, options.extraTags)
-	}
-}
-
-func TestWithMode(t *testing.T) {
-	value := Mode("mode")
-	options := &DriverOptions{}
-	WithMode(value)(options)
-	if options.mode != value {
-		t.Fatalf("expected mode option got set to %q but is set to %q", value, options.mode)
-	}
-}
-
-func TestWithVolumeAttachLimit(t *testing.T) {
-	var value int64 = 42
-	options := &DriverOptions{}
-	WithVolumeAttachLimit(value)(options)
-	if options.volumeAttachLimit != value {
-		t.Fatalf("expected volumeAttachLimit option got set to %d but is set to %d", value, options.volumeAttachLimit)
-	}
-}
-
-func TestWithClusterID(t *testing.T) {
-	var id string = "test-cluster-id"
-	options := &DriverOptions{}
-	WithKubernetesClusterID(id)(options)
-	if options.kubernetesClusterID != id {
-		t.Fatalf("expected kubernetesClusterID option got set to %s but is set to %s", id, options.kubernetesClusterID)
-	}
-}
-
-func TestWithAwsSdkDebugLog(t *testing.T) {
-	var enableSdkDebugLog bool = true
-	options := &DriverOptions{}
-	WithAwsSdkDebugLog(enableSdkDebugLog)(options)
-	if options.awsSdkDebugLog != enableSdkDebugLog {
-		t.Fatalf("expected awsSdkDebugLog option got set to %v but is set to %v", enableSdkDebugLog, options.awsSdkDebugLog)
-	}
-}
-
-func TestWithUserAgentExtra(t *testing.T) {
-	var userAgentExtra string = "test-user-agent"
-	options := &DriverOptions{}
-	WithUserAgentExtra(userAgentExtra)(options)
-	if options.userAgentExtra != userAgentExtra {
-		t.Fatalf("expected userAgentExtra option got set to %s but is set to %s", userAgentExtra, options.userAgentExtra)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			driver, err := NewDriver(mockCloud, tc.o, mockMounter, mockMetadataService, mockKubernetesClient)
+			if tc.hasNode && driver.node == nil {
+				t.Fatalf("Expected driver to have node but driver does not have node")
+			}
+			if tc.hasController && driver.controller == nil {
+				t.Fatalf("Expected driver to have controller but driver does not have controller")
+			}
+			if tc.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
 	}
 }

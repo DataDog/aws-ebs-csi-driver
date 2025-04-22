@@ -32,20 +32,20 @@ type PVTestDriver interface {
 	VolumeSnapshotTestDriver
 }
 
-// DynamicPVTestDriver represents an interface for a CSI driver that supports DynamicPV
+// DynamicPVTestDriver represents an interface for a CSI driver that supports DynamicPV.
 type DynamicPVTestDriver interface {
 	// GetDynamicProvisionStorageClass returns a StorageClass dynamic provision Persistent Volume
 	GetDynamicProvisionStorageClass(parameters map[string]string, mountOptions []string, reclaimPolicy *v1.PersistentVolumeReclaimPolicy, volumeExpansion *bool, bindingMode *storagev1.VolumeBindingMode, allowedTopologyValues []string, namespace string) *storagev1.StorageClass
 }
 
-// PreProvisionedVolumeTestDriver represents an interface for a CSI driver that supports pre-provisioned volume
+// PreProvisionedVolumeTestDriver represents an interface for a CSI driver that supports pre-provisioned volume.
 type PreProvisionedVolumeTestDriver interface {
 	// GetPersistentVolume returns a PersistentVolume with pre-provisioned volumeHandle
-	GetPersistentVolume(volumeID string, fsType string, size string, reclaimPolicy *v1.PersistentVolumeReclaimPolicy, namespace string) *v1.PersistentVolume
+	GetPersistentVolume(volumeID string, fsType string, size string, reclaimPolicy *v1.PersistentVolumeReclaimPolicy, namespace string, accessMode v1.PersistentVolumeAccessMode, volumeMode v1.PersistentVolumeMode) *v1.PersistentVolume
 }
 
 type VolumeSnapshotTestDriver interface {
-	GetVolumeSnapshotClass(namespace string) *volumesnapshotv1.VolumeSnapshotClass
+	GetVolumeSnapshotClass(namespace string, parameters map[string]string) *volumesnapshotv1.VolumeSnapshotClass
 }
 
 func getStorageClass(
@@ -80,7 +80,7 @@ func getStorageClass(
 	}
 }
 
-func getVolumeSnapshotClass(generateName string, provisioner string) *volumesnapshotv1.VolumeSnapshotClass {
+func getVolumeSnapshotClass(generateName string, provisioner string, parameters map[string]string) *volumesnapshotv1.VolumeSnapshotClass {
 	return &volumesnapshotv1.VolumeSnapshotClass{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       VolumeSnapshotClassKind,
@@ -91,5 +91,6 @@ func getVolumeSnapshotClass(generateName string, provisioner string) *volumesnap
 		},
 		Driver:         provisioner,
 		DeletionPolicy: volumesnapshotv1.VolumeSnapshotContentDelete,
+		Parameters:     parameters,
 	}
 }

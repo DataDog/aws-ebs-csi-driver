@@ -1,4 +1,4 @@
-{{- if .Values.controller.enableMetrics -}}
+{{- if and .Values.controller.enableMetrics (not .Values.nodeComponentOnly) -}}
 ---
 apiVersion: v1
 kind: Service
@@ -37,6 +37,28 @@ spec:
   endpoints:
     - targetPort: 3301
       path: /metrics
-      interval: 15s
+      interval: {{ .Values.controller.serviceMonitor.interval | default "15s"}}
 {{- end }}
+{{- end }}
+---
+{{- if .Values.node.enableMetrics }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: ebs-csi-node
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3302"
+  labels:
+    app: ebs-csi-node
+spec:
+  selector:
+    app: ebs-csi-node
+  ports:
+    - name: metrics
+      port: 3302
+      targetPort: 3302
+  internalTrafficPolicy: Local
+  type: ClusterIP
 {{- end }}
