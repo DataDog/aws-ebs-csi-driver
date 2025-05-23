@@ -14,3 +14,5 @@ test:
 
 build-docker-image:
   extends: .build-docker-image
+  variables:
+    EXTRA_ARGS: "--output type=image,compression=nydus,force-compression=true"
