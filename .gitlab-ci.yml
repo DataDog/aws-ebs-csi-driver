@@ -16,9 +16,3 @@ build-docker-image:
   variables:
     EXTRA_ARGS: "-f Dockerfile.dd"
   extends: .build-docker-image
-
-build-nydus-image:
-  needs: ["build-docker-image"]
-  variables:
-    IMAGE_SUFFIX: ""
-  extends: .build-nydus-image
