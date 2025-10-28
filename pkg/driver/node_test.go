@@ -1150,9 +1150,10 @@ func TestGetVolumesLimit(t *testing.T) {
 				VolumeAttachLimit:         -1,
 				ReservedVolumeAttachments: 3,
 			},
-			expectedVal: 36,
+			expectedVal: 35,
 			metadataMock: func(ctrl *gomock.Controller) *metadata.MockMetadataService {
 				m := metadata.NewMockMetadataService(ctrl)
+				m.EXPECT().GetNumBlockDeviceMappings().Return(0)
 				m.EXPECT().GetInstanceType().Return("t2.medium")
 				return m
 			},
@@ -1224,6 +1225,7 @@ func TestGetVolumesLimit(t *testing.T) {
 			expectedVal: 1,
 			metadataMock: func(ctrl *gomock.Controller) *metadata.MockMetadataService {
 				m := metadata.NewMockMetadataService(ctrl)
+				m.EXPECT().GetNumBlockDeviceMappings().Return(0)
 				m.EXPECT().GetInstanceType().Return("t3.xlarge")
 				m.EXPECT().GetNumAttachedENIs().Return(40)
 				return m
