@@ -820,6 +820,8 @@ func (d *NodeService) getVolumesLimit() int64 {
 	if reservedVolumeAttachments == -1 {
 		// Auto-detect number of reserved volume attachments - plus 1 to account for the root volume
 		reservedVolumeAttachments = d.metadata.GetNumBlockDeviceMappings() + 1
+	} else {
+		reservedVolumeAttachments += d.metadata.GetNumBlockDeviceMappings() + 1
 	}
 	klog.V(4).InfoS("getVolumesLimit: Removing reserved attachments", "reservedVolumeAttachments", reservedVolumeAttachments)
 	availableAttachments -= reservedVolumeAttachments
