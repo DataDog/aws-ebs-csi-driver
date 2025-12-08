@@ -19,6 +19,11 @@ build-docker-image:
 
 build-nydus-image:
   needs: ["build-docker-image"]
+  extends: .build-nydus-image
+
+build-merged-nydus-image:
+  needs: ["build-docker-image"]
   variables:
     MERGE_PLATFORM: "true"
+    IMAGE_SUFFIX: "-merged-nydus"
   extends: .build-nydus-image
