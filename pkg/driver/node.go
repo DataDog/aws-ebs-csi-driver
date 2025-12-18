@@ -1102,7 +1102,7 @@ func recheckFormattingOptionParameter(context map[string]string, key string, fsC
 }
 
 func (d *NodeService) preReadBlocks(ctx context.Context, devicePath, mode string) error {
-	klog.V(2).InfoS("Starting eager loading of blocks", "devicePath", devicePath, "mode", mode)
+	klog.InfoS("Starting eager loading of blocks", "devicePath", devicePath, "mode", mode)
 	startTime := time.Now()
 
 	var args []string
@@ -1117,7 +1117,11 @@ func (d *NodeService) preReadBlocks(ctx context.Context, devicePath, mode string
 		if numjobs < 1 {
 			numjobs = 1
 		}
-		klog.V(2).InfoS("Using parallel jobs for eager loading", "numjobs", numjobs, "devicePath", devicePath)
+		// Cap at 4 jobs to avoid overwhelming the system
+		if numjobs > 4 {
+			numjobs = 4
+		}
+		klog.InfoS("Using parallel jobs for eager loading", "numjobs", numjobs, "devicePath", devicePath)
 
 		cmdName = "fio"
 		args = []string{
@@ -1137,13 +1141,16 @@ func (d *NodeService) preReadBlocks(ctx context.Context, devicePath, mode string
 		return fmt.Errorf("invalid eager loading mode: %s", mode)
 	}
 
-	klog.V(4).InfoS("Executing eager loading command", "command", cmdName, "args", args)
+	klog.InfoS("Executing eager loading command", "command", cmdName)
 	output, err := exec.CommandContext(ctx, cmdName, args...).CombinedOutput()
+
+	duration := time.Since(startTime)
 	if err != nil {
+		klog.ErrorS(err, "Eager loading failed", "devicePath", devicePath, "mode", mode, "duration", duration, "output", string(output))
 		return fmt.Errorf("eager loading failed: %v, output: %s", err, string(output))
 	}
 
-	duration := time.Since(startTime)
-	klog.V(2).InfoS("Eager loading completed successfully", "devicePath", devicePath, "mode", mode, "duration", duration)
+	klog.InfoS("Eager loading completed successfully", "devicePath", devicePath, "mode", mode, "duration", duration)
+	klog.V(4).InfoS("Eager loading output", "output", string(output))
 	return nil
 }
