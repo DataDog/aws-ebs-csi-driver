@@ -120,6 +120,10 @@ const (
 
 	// BlockAttachUntilInitializedKey will prevent restored volume from being attached until it is fully initialized.
 	BlockAttachUntilInitializedKey = "blockattachuntilinitialized"
+
+	// EagerLoadingKey enables pre-reading of blocks before mounting to force data to be read from EBS.
+	// Valid values: "dd", "fio", or empty/false to disable.
+	EagerLoadingKey = "eagerloading"
 )
 
 // constants of keys in snapshot parameters.

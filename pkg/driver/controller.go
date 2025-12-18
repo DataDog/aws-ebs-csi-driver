@@ -129,6 +129,7 @@ func (d *ControllerService) CreateVolume(ctx context.Context, req *csi.CreateVol
 		ext4BigAlloc                bool
 		ext4ClusterSize             string
 		blockAttachUntilInitialized bool
+		eagerLoading                string
 	)
 
 	tProps := new(template.PVProps)
@@ -213,6 +214,11 @@ func (d *ControllerService) CreateVolume(ctx context.Context, req *csi.CreateVol
 			ext4ClusterSize = value
 		case BlockAttachUntilInitializedKey:
 			blockAttachUntilInitialized = isTrue(value)
+		case EagerLoadingKey:
+			eagerLoading = strings.ToLower(value)
+			if eagerLoading != "" && eagerLoading != "false" && eagerLoading != "dd" && eagerLoading != "fio" {
+				return nil, status.Errorf(codes.InvalidArgument, "Invalid value for %s: %s. Valid values are: dd, fio, false", EagerLoadingKey, value)
+			}
 		default:
 			if strings.HasPrefix(key, TagKeyPrefix) {
 				tagsToEvaluate = append(tagsToEvaluate, value)
@@ -322,6 +328,9 @@ func (d *ControllerService) CreateVolume(ctx context.Context, req *csi.CreateVol
 	}
 	if blockAttachUntilInitialized {
 		responseCtx[BlockAttachUntilInitializedKey] = trueStr
+	}
+	if eagerLoading != "" && eagerLoading != "false" {
+		responseCtx[EagerLoadingKey] = eagerLoading
 	}
 
 	if !ext4BigAlloc && len(ext4ClusterSize) > 0 {

@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -250,6 +251,14 @@ func (d *NodeService) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 	if device == source {
 		klog.V(4).InfoS("NodeStageVolume: volume already staged", "volumeID", volumeID)
 		return &csi.NodeStageVolumeResponse{}, nil
+	}
+
+	// Perform eager loading if requested
+	if eagerLoading, ok := volumeContext[EagerLoadingKey]; ok && eagerLoading != "" && eagerLoading != "false" {
+		klog.V(4).InfoS("NodeStageVolume: eager loading requested", "mode", eagerLoading, "volumeID", volumeID)
+		if err := d.preReadBlocks(ctx, source, eagerLoading); err != nil {
+			return nil, status.Errorf(codes.Internal, "Failed to perform eager loading: %v", err)
+		}
 	}
 
 	// FormatAndMount will format only if needed
@@ -1090,4 +1099,51 @@ func recheckFormattingOptionParameter(context map[string]string, key string, fsC
 		}
 	}
 	return v, nil
+}
+
+func (d *NodeService) preReadBlocks(ctx context.Context, devicePath, mode string) error {
+	klog.V(2).InfoS("Starting eager loading of blocks", "devicePath", devicePath, "mode", mode)
+	startTime := time.Now()
+
+	var args []string
+	var cmdName string
+	switch mode {
+	case "dd":
+		cmdName = "dd"
+		args = []string{fmt.Sprintf("if=%s", devicePath), "of=/dev/null", "bs=1M", "status=none"}
+	case "fio":
+		// Get number of CPUs available to this process (respects cgroup limits)
+		numjobs := runtime.NumCPU()
+		if numjobs < 1 {
+			numjobs = 1
+		}
+		klog.V(2).InfoS("Using parallel jobs for eager loading", "numjobs", numjobs, "devicePath", devicePath)
+
+		cmdName = "fio"
+		args = []string{
+			"--name=preread",
+			fmt.Sprintf("--filename=%s", devicePath),
+			"--rw=read",
+			"--bs=1M",
+			"--direct=1",
+			"--ioengine=libaio",
+			"--iodepth=32",
+			fmt.Sprintf("--numjobs=%d", numjobs),
+			"--thread",
+			"--output-format=normal",
+			"--group_reporting",
+		}
+	default:
+		return fmt.Errorf("invalid eager loading mode: %s", mode)
+	}
+
+	klog.V(4).InfoS("Executing eager loading command", "command", cmdName, "args", args)
+	output, err := exec.CommandContext(ctx, cmdName, args...).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("eager loading failed: %v, output: %s", err, string(output))
+	}
+
+	duration := time.Since(startTime)
+	klog.V(2).InfoS("Eager loading completed successfully", "devicePath", devicePath, "mode", mode, "duration", duration)
+	return nil
 }
