@@ -1112,30 +1112,19 @@ func (d *NodeService) preReadBlocks(ctx context.Context, devicePath, mode string
 		cmdName = "dd"
 		args = []string{fmt.Sprintf("if=%s", devicePath), "of=/dev/null", "bs=1M", "status=none"}
 	case "fio":
-		// Get number of CPUs available to this process (respects cgroup limits)
-		numjobs := runtime.NumCPU()
-		if numjobs < 1 {
-			numjobs = 1
-		}
-		// Cap at 4 jobs to avoid overwhelming the system
-		if numjobs > 4 {
-			numjobs = 4
-		}
-		klog.InfoS("Using parallel jobs for eager loading", "numjobs", numjobs, "devicePath", devicePath)
+		// Use AWS recommended fio settings for EBS volume initialization
+		// Reference: https://aws.amazon.com/blogs/storage/introducing-amazon-ebs-snapshots-archive/
+		klog.InfoS("Using fio for EBS volume initialization (AWS recommended settings)", "devicePath", devicePath)
 
 		cmdName = "fio"
 		args = []string{
-			"--name=preread",
 			fmt.Sprintf("--filename=%s", devicePath),
 			"--rw=read",
-			"--bs=1M",
-			"--direct=1",
-			"--ioengine=libaio",
+			"--bs=128k",
 			"--iodepth=32",
-			fmt.Sprintf("--numjobs=%d", numjobs),
-			"--thread",
-			"--output-format=normal",
-			"--group_reporting",
+			"--ioengine=libaio",
+			"--direct=1",
+			"--name=volume-initialize",
 		}
 	default:
 		return fmt.Errorf("invalid eager loading mode: %s", mode)
