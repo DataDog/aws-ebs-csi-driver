@@ -18,6 +18,7 @@ package driver
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"maps"
@@ -57,6 +58,19 @@ const (
 	VolumeOperationAlreadyExists = "An operation with the given volume=%q is already in progress"
 )
 
+const (
+	raidVGPrefix = "ebs-raid-"
+	raidLVName   = "data"
+	raidStateDir = "/var/lib/ebs-csi-driver/raid"
+)
+
+func raidVGName(volumeID string) string {
+	// Use a truncated hash of the volume ID for the VG name.
+	// VG names have a max length of 127 chars, but we keep it short.
+	h := sha256.Sum256([]byte(volumeID))
+	return raidVGPrefix + fmt.Sprintf("%x", h[:8])
+}
+
 var (
 	ValidFSTypes = map[string]struct{}{
 		FSTypeExt3: {},
@@ -82,10 +96,11 @@ const (
 
 // NodeService represents the node service of CSI driver.
 type NodeService struct {
-	metadata metadata.MetadataService
-	mounter  mounter.Mounter
-	inFlight *internal.InFlight
-	options  *Options
+	metadata     metadata.MetadataService
+	mounter      mounter.Mounter
+	inFlight     *internal.InFlight
+	options      *Options
+	raidStateDir string // directory for RAID state files; defaults to raidStateDir const
 	csi.UnimplementedNodeServer
 }
 
@@ -98,10 +113,11 @@ func NewNodeService(o *Options, md metadata.MetadataService, m mounter.Mounter, 
 	}
 
 	return &NodeService{
-		metadata: md,
-		mounter:  m,
-		inFlight: internal.NewInFlight(),
-		options:  o,
+		metadata:     md,
+		mounter:      m,
+		inFlight:     internal.NewInFlight(),
+		options:      o,
+		raidStateDir: raidStateDir,
 	}
 }
 
@@ -197,6 +213,11 @@ func (d *NodeService) NodeStageVolume(ctx context.Context, req *csi.NodeStageVol
 		klog.V(4).InfoS("NodeStageVolume: volume operation finished", "volumeID", volumeID)
 		d.inFlight.Delete(volumeID)
 	}()
+
+	// RAID volume handling
+	if raidMode, isRaid := req.GetPublishContext()[RaidModeContextKey]; isRaid && raidMode != "" {
+		return d.nodeStageVolumeRAID(ctx, req, target, raidMode, fsType, mountVolume.GetMountFlags())
+	}
 
 	devicePath, ok := req.GetPublishContext()[DevicePathKey]
 	if !ok {
@@ -332,6 +353,11 @@ func (d *NodeService) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstag
 		klog.V(4).InfoS("NodeUnStageVolume: volume operation finished", "volumeID", volumeID)
 		d.inFlight.Delete(volumeID)
 	}()
+
+	// RAID volume teardown
+	if IsRAIDVolume(volumeID) {
+		return d.nodeUnstageVolumeRAID(ctx, req)
+	}
 
 	// Check if target directory is a mount point. GetDeviceNameFromMount
 	// given a mnt point, finds the device from /proc/mounts
@@ -1090,6 +1116,248 @@ func checkAllocatable(ctx context.Context, clientset kubernetes.Interface, nodeN
 	}
 
 	return fmt.Errorf("isAllocatableSet: driver not found on node %s", nodeName)
+}
+
+func (d *NodeService) nodeStageVolumeRAID(ctx context.Context, req *csi.NodeStageVolumeRequest, target string, raidMode string, fsType string, mountFlags []string) (*csi.NodeStageVolumeResponse, error) {
+	volumeID := req.GetVolumeId()
+	publishContext := req.GetPublishContext()
+	volumeContext := req.GetVolumeContext()
+
+	stripeSize := publishContext[StripeSizeContextKey]
+	if stripeSize == "" {
+		stripeSize = DefaultStripeSize
+	}
+
+	// Get device paths from PublishContext
+	assignedDevicePaths := GetRAIDDevicePaths(publishContext)
+	if len(assignedDevicePaths) < 2 {
+		return nil, status.Errorf(codes.InvalidArgument, "RAID volume requires at least 2 device paths, got %d", len(assignedDevicePaths))
+	}
+
+	// Parse member volume IDs to resolve actual device paths
+	_, members, err := ParseRAIDVolumeID(volumeID)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid RAID volume ID: %v", err)
+	}
+
+	if len(assignedDevicePaths) != len(members) {
+		return nil, status.Errorf(codes.Internal, "RAID member count mismatch: %d device paths, %d member IDs", len(assignedDevicePaths), len(members))
+	}
+
+	// Resolve actual device paths (handles NVME remapping)
+	resolvedDevices := make([]string, 0, len(assignedDevicePaths))
+	for i, devicePath := range assignedDevicePaths {
+		source, findErr := d.mounter.FindDevicePath(devicePath, members[i], "", d.metadata.GetRegion())
+		if findErr != nil {
+			return nil, status.Errorf(codes.NotFound, "Failed to find RAID member device path %s: %v", devicePath, findErr)
+		}
+		resolvedDevices = append(resolvedDevices, source)
+	}
+
+	vgName := raidVGName(volumeID)
+	lvPath := d.mounter.LVPath(vgName, raidLVName)
+
+	// Check idempotency: if target is already mounted with the right device, succeed
+	device, _, err := d.mounter.GetDeviceNameFromMount(target)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to check if RAID volume is already mounted: %v", err)
+	}
+	if device == lvPath {
+		klog.V(4).InfoS("NodeStageVolume: RAID volume already staged", "volumeID", volumeID)
+		return &csi.NodeStageVolumeResponse{}, nil
+	}
+
+	// Try to activate existing VG first (e.g., after reboot)
+	active, err := d.mounter.IsVGActive(vgName)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to check VG status: %v", err)
+	}
+
+	if active {
+		klog.V(4).InfoS("NodeStageVolume: RAID VG already active, activating", "vgName", vgName)
+		if err := d.mounter.ActivateVG(vgName); err != nil {
+			return nil, status.Errorf(codes.Internal, "Failed to activate VG %s: %v", vgName, err)
+		}
+	} else {
+		// Create new LVM striped volume
+		klog.V(2).InfoS("NodeStageVolume: creating RAID LVM volume", "vgName", vgName, "devices", resolvedDevices, "stripeSize", stripeSize)
+		if err := d.mounter.CreateStripedLV(vgName, raidLVName, len(resolvedDevices), stripeSize, resolvedDevices); err != nil {
+			return nil, status.Errorf(codes.Internal, "Failed to create striped LV: %v", err)
+		}
+	}
+
+	// Create target directory if needed
+	exists, err := d.mounter.PathExists(target)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to check if target %q exists: %v", target, err)
+	}
+	if !exists {
+		if err := d.mounter.MakeDir(target); err != nil {
+			return nil, status.Errorf(codes.Internal, "Could not create target dir %q: %v", target, err)
+		}
+	}
+
+	// Build format options from volume context
+	formatOptions := buildFormatOptions(volumeContext, fsType)
+	mountOptions := collectMountOptions(fsType, mountFlags)
+
+	// Format and mount
+	klog.V(4).InfoS("NodeStageVolume: formatting and mounting RAID LV", "source", lvPath, "target", target, "fsType", fsType)
+	if err := d.mounter.FormatAndMountSensitiveWithFormatOptions(lvPath, target, fsType, mountOptions, nil, formatOptions); err != nil {
+		return nil, status.Errorf(codes.Internal, "Could not format %q and mount it at %q: %v", lvPath, target, err)
+	}
+
+	// Save state for teardown
+	if err := d.saveRAIDState(volumeID, vgName, resolvedDevices); err != nil {
+		klog.ErrorS(err, "Failed to save RAID state file, teardown may require manual intervention", "volumeID", volumeID)
+	}
+
+	klog.V(2).InfoS("NodeStageVolume: RAID volume staged successfully", "volumeID", volumeID, "vgName", vgName, "target", target)
+	return &csi.NodeStageVolumeResponse{}, nil
+}
+
+func (d *NodeService) nodeUnstageVolumeRAID(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
+	volumeID := req.GetVolumeId()
+	target := req.GetStagingTargetPath()
+	vgName := raidVGName(volumeID)
+
+	// Check if mounted
+	dev, refCount, err := d.mounter.GetDeviceNameFromMount(target)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Failed to check if target %q is a mount point: %v", target, err)
+	}
+
+	if refCount == 0 {
+		klog.V(5).InfoS("NodeUnstageVolume: RAID target not mounted", "target", target)
+	} else {
+		klog.V(4).InfoS("NodeUnstageVolume: unmounting RAID target", "target", target, "device", dev)
+		if err := d.mounter.Unstage(target); err != nil {
+			return nil, status.Errorf(codes.Internal, "Could not unmount RAID target %q: %v", target, err)
+		}
+	}
+
+	// Load state to get device list for PV cleanup
+	state, stateErr := d.loadRAIDState(vgName)
+
+	// Remove VG (deactivates LVs + removes VG)
+	active, err := d.mounter.IsVGActive(vgName)
+	if err != nil {
+		klog.ErrorS(err, "NodeUnstageVolume: failed to check VG status", "vgName", vgName)
+	}
+	if active {
+		if err := d.mounter.RemoveVG(vgName); err != nil {
+			return nil, status.Errorf(codes.Internal, "Failed to remove VG %s: %v", vgName, err)
+		}
+	}
+
+	// Remove PVs
+	if stateErr == nil && state != nil {
+		if err := d.mounter.RemovePVs(state.MemberDevices); err != nil {
+			klog.ErrorS(err, "NodeUnstageVolume: failed to remove PVs (non-fatal)", "volumeID", volumeID)
+		}
+	}
+
+	// Clean up state file
+	d.removeRAIDState(vgName)
+
+	klog.V(2).InfoS("NodeUnstageVolume: RAID volume unstaged successfully", "volumeID", volumeID, "vgName", vgName)
+	return &csi.NodeUnstageVolumeResponse{}, nil
+}
+
+// buildFormatOptions extracts filesystem format options from volume context.
+func buildFormatOptions(volumeContext map[string]string, fsType string) []string {
+	var formatOptions []string
+
+	if blockSize := volumeContext[BlockSizeKey]; blockSize != "" {
+		if fsType == FSTypeXfs {
+			blockSize = "size=" + blockSize
+		}
+		formatOptions = append(formatOptions, "-b", blockSize)
+	}
+	if inodeSize := volumeContext[InodeSizeKey]; inodeSize != "" {
+		option := "-I"
+		if fsType == FSTypeXfs {
+			option = "-i"
+			inodeSize = "size=" + inodeSize
+		}
+		formatOptions = append(formatOptions, option, inodeSize)
+	}
+	if bytesPerInode := volumeContext[BytesPerInodeKey]; bytesPerInode != "" {
+		formatOptions = append(formatOptions, "-i", bytesPerInode)
+	}
+	if numInodes := volumeContext[NumberOfInodesKey]; numInodes != "" {
+		formatOptions = append(formatOptions, "-N", numInodes)
+	}
+	if volumeContext[Ext4BigAllocKey] == "true" {
+		formatOptions = append(formatOptions, "-O", "bigalloc")
+	}
+	if clusterSize := volumeContext[Ext4ClusterSizeKey]; clusterSize != "" {
+		formatOptions = append(formatOptions, "-C", clusterSize)
+	}
+	if volumeContext[Ext4EncryptionSupportKey] == "true" {
+		formatOptions = append(formatOptions, "-O", "encrypt")
+	}
+
+	return formatOptions
+}
+
+type raidState struct {
+	CompositeVolumeID string   `json:"compositeVolumeID"`
+	VGName            string   `json:"vgName"`
+	MemberDevices     []string `json:"memberDevices"`
+}
+
+func (d *NodeService) saveRAIDState(volumeID, vgName string, devices []string) error {
+	stateDir := d.raidStateDir
+	if stateDir == "" {
+		stateDir = raidStateDir
+	}
+	if err := os.MkdirAll(stateDir, 0755); err != nil {
+		return fmt.Errorf("failed to create RAID state dir: %w", err)
+	}
+
+	state := raidState{
+		CompositeVolumeID: volumeID,
+		VGName:            vgName,
+		MemberDevices:     devices,
+	}
+
+	data, err := json.Marshal(state)
+	if err != nil {
+		return fmt.Errorf("failed to marshal RAID state: %w", err)
+	}
+
+	statePath := filepath.Join(stateDir, vgName+".json")
+	return os.WriteFile(statePath, data, 0644)
+}
+
+func (d *NodeService) loadRAIDState(vgName string) (*raidState, error) {
+	stateDir := d.raidStateDir
+	if stateDir == "" {
+		stateDir = raidStateDir
+	}
+	statePath := filepath.Join(stateDir, vgName+".json")
+	data, err := os.ReadFile(statePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var state raidState
+	if err := json.Unmarshal(data, &state); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal RAID state: %w", err)
+	}
+	return &state, nil
+}
+
+func (d *NodeService) removeRAIDState(vgName string) {
+	stateDir := d.raidStateDir
+	if stateDir == "" {
+		stateDir = raidStateDir
+	}
+	statePath := filepath.Join(stateDir, vgName+".json")
+	if err := os.Remove(statePath); err != nil && !os.IsNotExist(err) {
+		klog.ErrorS(err, "Failed to remove RAID state file", "path", statePath)
+	}
 }
 
 func recheckFormattingOptionParameter(context map[string]string, key string, fsConfigs map[string]fileSystemConfig, fsType string) (value string, err error) {
