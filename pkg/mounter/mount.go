@@ -48,6 +48,15 @@ type Mounter interface {
 	IsBlockDevice(fullPath string) (bool, error)
 	GetBlockSizeBytes(devicePath string) (int64, error)
 	GetVolumeStats(volumePath string) (VolumeStats, error)
+
+	// LVM operations for RAID volumes
+	CreateStripedLV(vgName string, lvName string, stripeCount int, stripeSize string, devices []string) error
+	ActivateVG(vgName string) error
+	DeactivateVG(vgName string) error
+	RemoveVG(vgName string) error
+	RemovePVs(devices []string) error
+	IsVGActive(vgName string) (bool, error)
+	LVPath(vgName string, lvName string) string
 }
 
 // VolumeStats holds volume stats returned by GetVolumeStats.
