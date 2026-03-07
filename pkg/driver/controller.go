@@ -220,6 +220,12 @@ func (d *ControllerService) CreateVolume(ctx context.Context, req *csi.CreateVol
 			ext4EncryptionSupport = isTrue(value)
 		case BlockAttachUntilInitializedKey:
 			blockAttachUntilInitialized = isTrue(value)
+		case RaidModeKey:
+			// handled by ParseRaidParams below
+		case MemberCountKey:
+			// handled by ParseRaidParams below
+		case StripeSizeKey:
+			// handled by ParseRaidParams below
 		default:
 			if strings.HasPrefix(key, TagKeyPrefix) {
 				tagsToEvaluate = append(tagsToEvaluate, value)
@@ -414,6 +420,70 @@ func (d *ControllerService) CreateVolume(ctx context.Context, req *csi.CreateVol
 		VolumeInitializationRate: volumeInitializationRate,
 	}
 
+	// RAID volume creation
+	raidParams, raidErr := ParseRaidParams(req.GetParameters())
+	if raidErr != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid RAID parameters: %v", raidErr)
+	}
+
+	if raidParams != nil {
+		// RAID volumes don't support snapshots or cloning
+		if snapshotID != "" || volumeID != "" {
+			return nil, status.Error(codes.InvalidArgument, "RAID volumes do not support snapshots or cloning")
+		}
+
+		memberCount := raidParams.MemberCount
+		perMemberBytes := util.RoundUpBytes(volSizeBytes / int64(memberCount))
+		perMemberIOPS := iops / int32(memberCount)
+		perMemberThroughput := throughput / int32(memberCount)
+		perMemberIOPSPerGB := iopsPerGB // keep per-GB ratio the same
+
+		memberIDs := make([]string, 0, memberCount)
+		for i := 0; i < memberCount; i++ {
+			memberOpts := *opts
+			memberOpts.CapacityBytes = perMemberBytes
+			memberOpts.IOPS = perMemberIOPS
+			memberOpts.Throughput = perMemberThroughput
+			memberOpts.IOPSPerGB = perMemberIOPSPerGB
+
+			// Copy tags and add RAID-specific tags
+			memberOpts.Tags = maps.Clone(opts.Tags)
+			memberOpts.Tags["raid.ebs.csi.aws.com/array-id"] = volName
+			memberOpts.Tags["raid.ebs.csi.aws.com/member-index"] = strconv.Itoa(i)
+			memberOpts.Tags["raid.ebs.csi.aws.com/member-count"] = strconv.Itoa(memberCount)
+			memberOpts.Tags["raid.ebs.csi.aws.com/mode"] = raidParams.Mode
+
+			memberName := fmt.Sprintf("%s-member-%d", volName, i)
+			disk, createErr := d.cloud.CreateDisk(ctx, memberName, &memberOpts)
+			if createErr != nil {
+				// Rollback: delete all successfully created members
+				klog.ErrorS(createErr, "RAID CreateVolume: member creation failed, rolling back", "memberIndex", i, "volName", volName)
+				for _, id := range memberIDs {
+					if _, delErr := d.cloud.DeleteDisk(ctx, id); delErr != nil {
+						klog.ErrorS(delErr, "RAID CreateVolume: rollback failed to delete member", "memberID", id)
+					}
+				}
+				return nil, status.Errorf(codes.Internal, "Could not create RAID member %d for volume %q: %v", i, volName, createErr)
+			}
+			memberIDs = append(memberIDs, disk.VolumeID)
+		}
+
+		compositeID := BuildRAIDVolumeID(raidParams.Mode, memberIDs)
+
+		// Store RAID metadata in volume context for use by NodeStageVolume
+		responseCtx[RaidModeContextKey] = raidParams.Mode
+		responseCtx[StripeSizeContextKey] = raidParams.StripeSize
+		responseCtx[MemberCountKey] = strconv.Itoa(memberCount)
+
+		// Build a synthetic Disk representing the aggregate
+		aggregateDisk := &cloud.Disk{
+			VolumeID:         compositeID,
+			CapacityGiB:      util.BytesToGiB(perMemberBytes * int64(memberCount)),
+			AvailabilityZone: zone,
+		}
+		return newCreateVolumeResponse(aggregateDisk, responseCtx), nil
+	}
+
 	disk, err := d.cloud.CreateDisk(ctx, volName, opts)
 	if err != nil {
 		var errCode codes.Code
@@ -463,6 +533,26 @@ func (d *ControllerService) DeleteVolume(ctx context.Context, req *csi.DeleteVol
 	}
 	defer d.inFlight.Delete(volumeID)
 
+	if IsRAIDVolume(volumeID) {
+		_, members, parseErr := ParseRAIDVolumeID(volumeID)
+		if parseErr != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "Invalid RAID volume ID %q: %v", volumeID, parseErr)
+		}
+		var lastErr error
+		for _, memberID := range members {
+			if _, err := d.cloud.DeleteDisk(ctx, memberID); err != nil {
+				if !errors.Is(err, cloud.ErrNotFound) {
+					klog.ErrorS(err, "RAID DeleteVolume: failed to delete member", "memberID", memberID, "volumeID", volumeID)
+					lastErr = err
+				}
+			}
+		}
+		if lastErr != nil {
+			return nil, status.Errorf(codes.Internal, "Could not delete all RAID members for volume %q: %v", volumeID, lastErr)
+		}
+		return &csi.DeleteVolumeResponse{}, nil
+	}
+
 	if _, err := d.cloud.DeleteDisk(ctx, volumeID); err != nil {
 		if errors.Is(err, cloud.ErrNotFound) {
 			klog.V(4).InfoS("DeleteVolume: volume not found, returning with success")
@@ -492,6 +582,10 @@ func (d *ControllerService) ControllerPublishVolume(ctx context.Context, req *cs
 			return nil, status.Error(codes.InvalidArgument, "node-local volumes are not enabled")
 		}
 		return d.controllerPublishVolumeNodeLocal(ctx, req)
+	}
+
+	if IsRAIDVolume(volumeID) {
+		return d.controllerPublishVolumeRAID(ctx, req)
 	}
 
 	if err := validateControllerPublishVolumeRequest(req); err != nil {
@@ -580,6 +674,51 @@ func (d *ControllerService) controllerPublishVolumeNodeLocal(ctx context.Context
 	return &csi.ControllerPublishVolumeResponse{PublishContext: pvInfo}, nil
 }
 
+func (d *ControllerService) controllerPublishVolumeRAID(ctx context.Context, req *csi.ControllerPublishVolumeRequest) (*csi.ControllerPublishVolumeResponse, error) {
+	volumeID := req.GetVolumeId()
+	nodeID := req.GetNodeId()
+
+	if err := validateControllerPublishVolumeRequest(req); err != nil {
+		return nil, err
+	}
+
+	if !d.inFlight.Insert(volumeID + nodeID) {
+		return nil, status.Error(codes.Aborted, fmt.Sprintf(internal.VolumeOperationAlreadyExistsErrorMsg, volumeID))
+	}
+	defer d.inFlight.Delete(volumeID + nodeID)
+
+	mode, members, err := ParseRAIDVolumeID(volumeID)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid RAID volume ID %q: %v", volumeID, err)
+	}
+
+	stripeSize := req.GetVolumeContext()[StripeSizeContextKey]
+	if stripeSize == "" {
+		stripeSize = DefaultStripeSize
+	}
+
+	devicePaths := make([]string, 0, len(members))
+	for i, memberID := range members {
+		klog.V(2).InfoS("ControllerPublishVolume: attaching RAID member", "memberID", memberID, "memberIndex", i, "nodeID", nodeID)
+		devicePath, attachErr := d.cloud.AttachDisk(ctx, memberID, nodeID)
+		if attachErr != nil {
+			// Rollback: detach successfully attached members
+			klog.ErrorS(attachErr, "RAID ControllerPublishVolume: member attach failed, rolling back", "memberID", memberID, "volumeID", volumeID)
+			for j := 0; j < i; j++ {
+				if detachErr := d.cloud.DetachDisk(ctx, members[j], nodeID); detachErr != nil {
+					klog.ErrorS(detachErr, "RAID ControllerPublishVolume: rollback detach failed", "memberID", members[j])
+				}
+			}
+			return nil, status.Errorf(codes.Internal, "Could not attach RAID member %q to node %q: %v", memberID, nodeID, attachErr)
+		}
+		devicePaths = append(devicePaths, devicePath)
+	}
+
+	klog.InfoS("ControllerPublishVolume: all RAID members attached", "volumeID", volumeID, "nodeID", nodeID, "memberCount", len(members))
+	pvInfo := BuildRAIDPublishContext(mode, stripeSize, devicePaths)
+	return &csi.ControllerPublishVolumeResponse{PublishContext: pvInfo}, nil
+}
+
 func (d *ControllerService) ControllerUnpublishVolume(ctx context.Context, req *csi.ControllerUnpublishVolumeRequest) (*csi.ControllerUnpublishVolumeResponse, error) {
 	klog.V(4).InfoS("ControllerUnpublishVolume: called", "args", util.SanitizeRequest(req))
 
@@ -593,6 +732,10 @@ func (d *ControllerService) ControllerUnpublishVolume(ctx context.Context, req *
 	if isNodeLocalVolume(volumeID) {
 		klog.V(2).InfoS("ControllerUnpublishVolume: node-local mode, skipping detach", "volumeID", volumeID, "nodeID", nodeID)
 		return &csi.ControllerUnpublishVolumeResponse{}, nil
+	}
+
+	if IsRAIDVolume(volumeID) {
+		return d.controllerUnpublishVolumeRAID(ctx, req)
 	}
 
 	if !d.inFlight.Insert(volumeID + nodeID) {
@@ -623,6 +766,34 @@ func validateControllerUnpublishVolumeRequest(req *csi.ControllerUnpublishVolume
 	}
 
 	return nil
+}
+
+func (d *ControllerService) controllerUnpublishVolumeRAID(ctx context.Context, req *csi.ControllerUnpublishVolumeRequest) (*csi.ControllerUnpublishVolumeResponse, error) {
+	volumeID := req.GetVolumeId()
+	nodeID := req.GetNodeId()
+
+	if !d.inFlight.Insert(volumeID + nodeID) {
+		return nil, status.Error(codes.Aborted, fmt.Sprintf(internal.VolumeOperationAlreadyExistsErrorMsg, volumeID))
+	}
+	defer d.inFlight.Delete(volumeID + nodeID)
+
+	_, members, err := ParseRAIDVolumeID(volumeID)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "Invalid RAID volume ID %q: %v", volumeID, err)
+	}
+
+	for _, memberID := range members {
+		klog.V(2).InfoS("ControllerUnpublishVolume: detaching RAID member", "memberID", memberID, "nodeID", nodeID)
+		if err := d.cloud.DetachDisk(ctx, memberID, nodeID); err != nil {
+			if !errors.Is(err, cloud.ErrNotFound) {
+				return nil, status.Errorf(codes.Internal, "Could not detach RAID member %q from node %q: %v", memberID, nodeID, err)
+			}
+			klog.InfoS("ControllerUnpublishVolume: RAID member not found, continuing", "memberID", memberID, "nodeID", nodeID)
+		}
+	}
+
+	klog.InfoS("ControllerUnpublishVolume: all RAID members detached", "volumeID", volumeID, "nodeID", nodeID)
+	return &csi.ControllerUnpublishVolumeResponse{}, nil
 }
 
 func (d *ControllerService) ControllerGetCapabilities(ctx context.Context, req *csi.ControllerGetCapabilitiesRequest) (*csi.ControllerGetCapabilitiesResponse, error) {
@@ -665,7 +836,7 @@ func (d *ControllerService) ValidateVolumeCapabilities(ctx context.Context, req 
 	}
 
 	// Node-local volumes don't need GetDiskByID validation
-	if !isNodeLocalVolume(volumeID) {
+	if !isNodeLocalVolume(volumeID) && !IsRAIDVolume(volumeID) {
 		if _, err := d.cloud.GetDiskByID(ctx, volumeID); err != nil {
 			if errors.Is(err, cloud.ErrNotFound) {
 				return nil, status.Error(codes.NotFound, "Volume not found")

@@ -383,6 +383,105 @@ func (mr *MockMounterMockRecorder) Unpublish(path interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Unpublish", reflect.TypeOf((*MockMounter)(nil).Unpublish), path)
 }
 
+// CreateStripedLV mocks base method.
+func (m *MockMounter) CreateStripedLV(vgName string, lvName string, stripeCount int, stripeSize string, devices []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateStripedLV", vgName, lvName, stripeCount, stripeSize, devices)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateStripedLV indicates an expected call of CreateStripedLV.
+func (mr *MockMounterMockRecorder) CreateStripedLV(vgName, lvName, stripeCount, stripeSize, devices interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateStripedLV", reflect.TypeOf((*MockMounter)(nil).CreateStripedLV), vgName, lvName, stripeCount, stripeSize, devices)
+}
+
+// ActivateVG mocks base method.
+func (m *MockMounter) ActivateVG(vgName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ActivateVG", vgName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ActivateVG indicates an expected call of ActivateVG.
+func (mr *MockMounterMockRecorder) ActivateVG(vgName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ActivateVG", reflect.TypeOf((*MockMounter)(nil).ActivateVG), vgName)
+}
+
+// DeactivateVG mocks base method.
+func (m *MockMounter) DeactivateVG(vgName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeactivateVG", vgName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeactivateVG indicates an expected call of DeactivateVG.
+func (mr *MockMounterMockRecorder) DeactivateVG(vgName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeactivateVG", reflect.TypeOf((*MockMounter)(nil).DeactivateVG), vgName)
+}
+
+// RemoveVG mocks base method.
+func (m *MockMounter) RemoveVG(vgName string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveVG", vgName)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveVG indicates an expected call of RemoveVG.
+func (mr *MockMounterMockRecorder) RemoveVG(vgName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveVG", reflect.TypeOf((*MockMounter)(nil).RemoveVG), vgName)
+}
+
+// RemovePVs mocks base method.
+func (m *MockMounter) RemovePVs(devices []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemovePVs", devices)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemovePVs indicates an expected call of RemovePVs.
+func (mr *MockMounterMockRecorder) RemovePVs(devices interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePVs", reflect.TypeOf((*MockMounter)(nil).RemovePVs), devices)
+}
+
+// IsVGActive mocks base method.
+func (m *MockMounter) IsVGActive(vgName string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsVGActive", vgName)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsVGActive indicates an expected call of IsVGActive.
+func (mr *MockMounterMockRecorder) IsVGActive(vgName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsVGActive", reflect.TypeOf((*MockMounter)(nil).IsVGActive), vgName)
+}
+
+// LVPath mocks base method.
+func (m *MockMounter) LVPath(vgName string, lvName string) string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LVPath", vgName, lvName)
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// LVPath indicates an expected call of LVPath.
+func (mr *MockMounterMockRecorder) LVPath(vgName, lvName interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LVPath", reflect.TypeOf((*MockMounter)(nil).LVPath), vgName, lvName)
+}
+
 // Unstage mocks base method.
 func (m *MockMounter) Unstage(path string) error {
 	m.ctrl.T.Helper()
