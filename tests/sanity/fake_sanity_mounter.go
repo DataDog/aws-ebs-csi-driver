@@ -150,3 +150,31 @@ func (m *fakeMounter) Unmount(target string) error {
 func (m *fakeMounter) GetVolumeStats(volumePath string) (mounter.VolumeStats, error) {
 	return mounter.VolumeStats{}, nil
 }
+
+func (m *fakeMounter) CreateStripedLV(vgName string, lvName string, stripeCount int, stripeSize string, devices []string) error {
+	return nil
+}
+
+func (m *fakeMounter) ActivateVG(vgName string) error {
+	return nil
+}
+
+func (m *fakeMounter) DeactivateVG(vgName string) error {
+	return nil
+}
+
+func (m *fakeMounter) RemoveVG(vgName string) error {
+	return nil
+}
+
+func (m *fakeMounter) RemovePVs(devices []string) error {
+	return nil
+}
+
+func (m *fakeMounter) IsVGActive(vgName string) (bool, error) {
+	return false, nil
+}
+
+func (m *fakeMounter) LVPath(vgName string, lvName string) string {
+	return fmt.Sprintf("/dev/%s/%s", vgName, lvName)
+}
