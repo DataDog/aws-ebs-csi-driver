@@ -30,6 +30,8 @@ ARG TARGETARCH
 ARG VERSION
 ARG GOFIPS140=v1.0.0
 RUN --mount=type=cache,target=/gomodcache --mount=type=cache,target=/gocache OS=$TARGETOS ARCH=$TARGETARCH GOFIPS140=$GOFIPS140 make
+# Fail the build if the produced binary is not FIPS compliant.
+RUN go version -m bin/aws-ebs-csi-driver 2>/dev/null | grep -q "GOFIPS140=$GOFIPS140"
 
 FROM $BASE_IMAGE
 COPY --from=builder /go/src/github.com/kubernetes-sigs/aws-ebs-csi-driver/bin/aws-ebs-csi-driver /bin/aws-ebs-csi-driver
