@@ -362,14 +362,14 @@ var (
 			Steps:    11,
 		},
 
-		// Most attach/detach operations on AWS finish within 1-4 seconds.
-		// By using 1 second starting interval with a backoff of 1.8,
-		// we get [1, 1.8, 3.24, 5.832000000000001, 10.4976].
-		// In total, we wait for 2601 seconds.
+		// Most attach/detach operations on AWS finish within 1-12 seconds.
+		// By using a 500 millisecond starting interval with a backoff of 1.35,
+		// we poll at [0, 0.5, 1.18, 2.09, 3.32, 4.98, 7.22, 10.25, 14.33, 19.85, 27.30, ...] seconds.
+		// In total, we wait for ~1420 seconds.
 		attachmentBackoff: wait.Backoff{
-			Duration: 1 * time.Second,
-			Factor:   1.8,
-			Steps:    13,
+			Duration: 500 * time.Millisecond,
+			Factor:   1.35,
+			Steps:    24,
 		},
 
 		modificationBackoff: wait.Backoff{
