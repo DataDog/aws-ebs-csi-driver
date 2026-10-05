@@ -38,5 +38,6 @@ COPY --from=builder /go/src/github.com/kubernetes-sigs/aws-ebs-csi-driver/bin/aw
 # Install xfs tools for xfs filesystem support in EBS volumes
 USER root
 RUN clean-apt install xfsprogs
-USER dog
+# the UID of user dog is 501
+USER 501
 ENTRYPOINT ["/bin/aws-ebs-csi-driver"]
